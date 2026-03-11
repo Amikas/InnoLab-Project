@@ -7,3 +7,5 @@ ctf-frontend-next/node_modules/
 .idea
 .DS_Store
 .qwen
+Doc.md
+Refactor.md

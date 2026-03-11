@@ -3,9 +3,6 @@ package at.fhtw.ctfbackend.config;
 import at.fhtw.ctfbackend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.ldap.core.support.LdapContextSource;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,10 +10,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
-import org.springframework.security.ldap.authentication.BindAuthenticator;
-import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
-import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -35,21 +28,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(LdapContextSource contextSource) {
-        FilterBasedLdapUserSearch userSearch =
-                new FilterBasedLdapUserSearch("ou=users", "(uid={0})", contextSource);
-
-        BindAuthenticator bindAuthenticator = new BindAuthenticator(contextSource);
-        bindAuthenticator.setUserSearch(userSearch);
-
-        LdapAuthenticationProvider provider = new LdapAuthenticationProvider(bindAuthenticator,
-                new DefaultLdapAuthoritiesPopulator(contextSource, null));
-
-        return new ProviderManager(List.of(provider));
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -84,7 +63,6 @@ public class SecurityConfig {
 )
 
 
-                .authenticationManager(authManager)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

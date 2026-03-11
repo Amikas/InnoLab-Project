@@ -21,7 +21,7 @@ It combines the Quick Start Guide (QSG), Test Plan, Test Summary Report, and App
 
 | Tool | Version | Purpose |
 |------|----------|----------|
-| **Docker Desktop** | ≥ 4.x | Run PostgreSQL, LDAP, and backend containers |
+| **Docker Desktop** | ≥ 4.x | Run PostgreSQL and backend containers |
 | **Java** | 21 | Build and run backend |
 | **Maven** | 3.9+ | Build & test management |
 | **Postman / Newman** | Latest | API testing |
@@ -35,10 +35,9 @@ It combines the Quick Start Guide (QSG), Test Plan, Test Summary Report, and App
 ```
 InnoLab-Project/
  ctf-backend/              → Backend Spring Boot application
- ctf-frontend-next/        → LDAP configuration & seed files                  
+ ctf-frontend-next/        → Frontend Next.js application
  ctf-terminal/             → CLI and tools
- ldap/                     → LDAP configuration & seed files
- tests/                    → QA documentation 
+ tests/                    → QA documentation
  docker-compose.yml        → Starts complete environment
 
 ```
@@ -118,9 +117,9 @@ Includes detailed steps, expected results, and pass/fail status.
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | Port 8080 in use | Conflict | Stop previous service |
-| LDAP error 32 | Missing OU | Apply `01_create_ou_users.ldif` |
 | 401 Unauthorized | Expired token | Re-login |
 | Database error | Postgres down | `docker restart postgres` |
+| LDAP connection failed | FH LDAP unavailable | Check network connection |
 
 ---
 
@@ -139,7 +138,7 @@ Includes detailed steps, expected results, and pass/fail status.
 | In Scope                                                                | Out of Scope |
 |-------------------------------------------------------------------------|--------------|
 | API endpoints & Frontend (`/api/challenges`, `/api/flags/submit`, etc.) |  |
-| LDAP Authentication                                                     | Registration (handled externally by FH) |
+| FH LDAP Authentication                                                  | Registration (handled externally by FH) |
 | Database integration                                                    | External Confluence API reliability |
 | File operations                                                         | UI/UX validation |
 
@@ -162,7 +161,7 @@ Includes detailed steps, expected results, and pass/fail status.
 |-----------|------------|
 | Backend | Java 21 + Spring Boot |
 | Database | PostgreSQL via Docker |
-| Authentication | LDAP (ctf.local) |
+| Authentication | FH LDAP Server (External) |
 | Test Framework | JUnit 5, Mockito, JaCoCo |
 | Automation | Postman / Newman |
 | CI Tool | Maven CLI (local) |
@@ -187,7 +186,7 @@ Includes detailed steps, expected results, and pass/fail status.
 |-------|-------------|
 | **Test Case ID** | TC-AUTH-001 |
 | **Scenario** | SC-001 – Successful Student Login |
-| **Preconditions** | LDAP running; valid FH user exists |
+| **Preconditions** | FH LDAP server accessible; valid FH user exists |
 | **Test Steps** | 1. Navigate to login<br>2. Enter credentials<br>3. Submit |
 | **Test Data** | Username: testuser<br>Password: password |
 | **Expected Result** | HTTP 200 OK; JWT token generated; redirect to dashboard |

@@ -1,3 +1,0 @@
-dn: ou=users,dc=ctf,dc=local
-objectClass: organizationalUnit
-ou: users

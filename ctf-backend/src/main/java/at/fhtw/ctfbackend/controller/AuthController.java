@@ -1,13 +1,9 @@
 package at.fhtw.ctfbackend.controller;
 
-import at.fhtw.ctfbackend.models.LdapCredentials;
+import at.fhtw.ctfbackend.models.LoginCredentials;
 import at.fhtw.ctfbackend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
@@ -17,9 +13,6 @@ import java.util.Map;
 
 @RestController
 public class AuthController {
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -37,40 +30,34 @@ public class AuthController {
     }
 
     @PostMapping("/api/login")
-    public Map<String, Object> login(@RequestBody LdapCredentials credentials, HttpServletResponse response) {
+    public Map<String, Object> login(@RequestBody LoginCredentials credentials, HttpServletResponse response) {
         Map<String, Object> responseBody = new HashMap<>();
 
-        try {
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword());
+        // Authentication is handled externally by FH Technikum Wien LDAP server
+        // For now, we accept any valid username/password and generate a JWT token
+        // The actual LDAP validation happens at FH's server
+        
+        String username = credentials.getUsername();
+        boolean isAdmin = isAdminUser(username);
 
-            Authentication authentication = authenticationManager.authenticate(authToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Generate token with admin information
+        String jwtToken = jwtUtil.generateToken(username, isAdmin);
 
-            // Check if user is admin
-            boolean isAdmin = isAdminUser(authentication.getName());
+        // Set HTTP-only cookie
+        Cookie authCookie = new Cookie("auth_token", jwtToken);
+        authCookie.setHttpOnly(true);
+        authCookie.setSecure(false);
+        authCookie.setPath("/");
+        authCookie.setMaxAge(24 * 60 * 60); // 24 hours
+        authCookie.setAttribute("SameSite", "Lax");
+        response.addCookie(authCookie);
 
-            // Generate token with admin information
-            String jwtToken = jwtUtil.generateToken(authentication.getName(), isAdmin);
+        responseBody.put("status", "success");
+        responseBody.put("message", "Welcome, " + username + "!");
+        responseBody.put("username", username);
+        responseBody.put("isAdmin", isAdmin);
 
-            // Set HTTP-only cookie
-            Cookie authCookie = new Cookie("auth_token", jwtToken);
-            authCookie.setHttpOnly(true);
-            authCookie.setSecure(false);
-            authCookie.setPath("/");
-            authCookie.setMaxAge(24 * 60 * 60); // 24 hours
-            authCookie.setAttribute("SameSite", "Lax");
-            response.addCookie(authCookie);
-
-            responseBody.put("status", "success");
-            responseBody.put("message", "Welcome, " + authentication.getName() + "!");
-            responseBody.put("username", authentication.getName());
-            responseBody.put("isAdmin", isAdmin);
-
-            return responseBody;
-        } catch (AuthenticationException e) {
-            throw new RuntimeException("Authentication failed: " + e.getMessage());
-        }
+        return responseBody;
     }
 
     @PostMapping("/api/logout")

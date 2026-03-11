@@ -12,21 +12,5 @@ services:
     volumes:
       - pgdata-test:/var/lib/postgresql/data
 
-  ldap:
-    image: osixia/openldap:1.5.0
-    environment:
-      LDAP_ORGANISATION: "CTF"
-      LDAP_DOMAIN: "ctf.local"
-      LDAP_ADMIN_PASSWORD: "admin"
-      LDAP_CONFIG_PASSWORD: "admin"
-      LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
-    ports:
-      - "389:389"
-    volumes:
-      - ldapdata-test:/var/lib/ldap
-      - ldapconfig-test:/etc/ldap/slapd.d
-
 volumes:
   pgdata-test:
-  ldapdata-test:
-  ldapconfig-test:

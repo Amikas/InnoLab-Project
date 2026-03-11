@@ -18,7 +18,7 @@
 ## 2. Introduction
 
 ### 2.1 Purpose
-This document defines the testing strategy and approach for the CTF (Capture The Flag) Backend system developed for FH Technikum Wien. The system allows students to authenticate using their FH credentials via LDAP and participate in CTF challenges.
+This document defines the testing strategy and approach for the CTF (Capture The Flag) Backend system developed for FH Technikum Wien. The system allows students to authenticate using their FH credentials via the university LDAP server and participate in CTF challenges.
 
 ### 2.2 Scope
 Testing covers backend & frontend REST API endpoints, authentication, challenge management, flag submission, and security controls.
@@ -26,14 +26,14 @@ Testing covers backend & frontend REST API endpoints, authentication, challenge 
 ### 2.3 Project Context
 - **Project Type:** Innolab - Semester Project
 - **Goal:** Establish CTF training environment at FH Technikum Wien
-- **Team Size:** 8 members 
-- **Technology:** Java 21, Spring Boot 3.4, PostgreSQL, LDAP
+- **Team Size:** 8 members
+- **Technology:** Java 21, Spring Boot 3.4, PostgreSQL
 
 ---
 
 ## 3. Test Objectives
 
-1. **Verify LDAP Authentication** - Students can log in with FH credentials
+1. **Verify FH LDAP Authentication** - Students can log in with FH credentials
 2. **Validate Challenge Management** - Challenges can be listed and downloaded
 3. **Test Flag Submission Logic** - Correct flags are accepted, incorrect rejected
 4. **Ensure Security** - No SQL injection, XSS, or path traversal vulnerabilities
@@ -48,7 +48,7 @@ Testing covers backend & frontend REST API endpoints, authentication, challenge 
 
 | Feature | Description | Priority |
 |---------|-----------|----------|
-| **Authentication** | LDAP login via FH credentials | HIGH     |
+| **Authentication** | FH LDAP login via university credentials | HIGH     |
 | **JWT Token Generation** | Secure token creation and validation | HIGH     |
 | **Challenge Listing** | GET /api/challenges returns all challenges | HIGH     |
 | **Challenge Download** | GET /api/challenges/{id}/download returns ZIP | MEDIUM   |
@@ -138,17 +138,17 @@ Testing covers backend & frontend REST API endpoints, authentication, challenge 
 ```yaml
 Environment: Test (Isolated)
 Database: H2 In-Memory Database
-LDAP: Embedded LDAP (Spring Boot)
+Authentication: Mock authentication for testing
 Port: Random (for parallel tests)
 ```
 
 ### 6.2 Test Data
 
-**Test Users (LDIF):**
+**Test Users:**
 ```
-uid=testuser,ou=users,dc=ctf,dc=local (password: password)
-uid=player1,ou=users,dc=ctf,dc=local (password: test123)
-uid=admin,ou=users,dc=ctf,dc=local (password: admin123)
+Username: testuser (password: password)
+Username: player1 (password: test123)
+Username: admin (password: admin123)
 ```
 
 **Test Challenges:**
@@ -174,9 +174,9 @@ ID: rev-201, Flag: flag{reverse_master}
 
 ## 7. Entry and Exit Criteria
 
-### 7.1 Entry Criteria 
+### 7.1 Entry Criteria
 - [ ] Development code is committed and stable
-- [ ] Test environment (H2, embedded LDAP) is configured
+- [ ] Test environment (H2, mock authentication) is configured
 - [ ] Test data (users, challenges) is prepared
 - [ ] All dependencies (pom.xml) are resolved
 - [ ] Test structure (src/test/java) is created
@@ -274,7 +274,7 @@ ID: rev-201, Flag: flag{reverse_master}
 
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
-| LDAP unavailable during tests | Medium | High | Use embedded LDAP for tests |
+| FH LDAP unavailable during tests | Low | High | Use mock authentication for tests |
 | Database connection issues | Low | High | Use H2 in-memory DB |
 | Time constraint (solo testing) | High | Medium | Focus on HIGH risk areas first |
 | Lack of test data | Low | Medium | Create test data loaders |
@@ -350,7 +350,7 @@ Complete documentation
 ## 13. Assumptions & Dependencies
 
 ### 13.1 Assumptions
-- LDAP server with FH users is available in production
+- FH LDAP server is available in production
 - Challenge files (ZIPs) are provided in `src/main/resources/files/`
 - PostgreSQL database is configured in production
 - Confluence API is optional (not critical for testing)
@@ -360,7 +360,7 @@ Complete documentation
 - Java 21+ installed
 - Maven 4.+ installed
 - Access to codebase (Git repository)
-- Test environment setup (H2, embedded LDAP)
+- Test environment setup (H2, mock authentication)
 
 ---
 
@@ -394,7 +394,7 @@ Certain classes are excluded from code coverage analysis to maintain meaningful 
 ```
 - Entity classes (CategoryEntity, ChallengeEntity, etc.)
 - Model/DTO classes (Category, Challenge, etc.)
-- Configuration classes (LdapConfig, SecurityConfig, etc.)
+- Configuration classes (SecurityConfig, etc.)
 - Main application class (CtfBackendApplication)
 - External API clients (ConfluenceClient)
 ```

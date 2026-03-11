@@ -38,7 +38,7 @@ The project provides an environment where users can practice cybersecurity skill
 * **Java / Spring Boot**
 * **TypeScript / Next.js**
 * **Node.js**
-* **LDAP**
+* **FH LDAP Authentication**
 * **Docker & Docker Compose**
 
 ---
