@@ -36,6 +36,7 @@ services:
     environment:
       - CONFLUENCE_EMAIL=${CONFLUENCE_EMAIL}
       - CONFLUENCE_API_TOKEN=${CONFLUENCE_API_TOKEN}
+      - JWT_SECRET=${JWT_SECRET}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - TERMINAL_GATEWAY_URL=http://terminal:3001
       - TERMINAL_WS_URL=ws://terminal:3001

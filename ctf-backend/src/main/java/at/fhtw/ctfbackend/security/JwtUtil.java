@@ -2,8 +2,10 @@ package at.fhtw.ctfbackend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,11 +15,27 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Fixed secret key - use a long, secure string
-    private final Key key = Keys.hmacShaKeyFor("ctf-backend-super-secret-key-2024-fhtw-innolab-project-1234567890".getBytes());
+    private final Key key;
 
     // Token validity: 24 hours
     private final long expirationMillis = 1000 * 60 * 60 * 24;
+
+    public JwtUtil(@Value("${JWT_SECRET}") String jwtSecret) {
+        this.key = createSigningKey(jwtSecret);
+    }
+
+    private Key createSigningKey(String jwtSecret) {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            throw new IllegalStateException("JWT_SECRET is required and must not be empty");
+        }
+
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be at least 32 bytes for HS256");
+        }
+
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     // Generate JWT with username only (backward compatibility)
     public String generateToken(String username) {

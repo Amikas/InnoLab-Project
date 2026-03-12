@@ -2,7 +2,9 @@ package at.fhtw.ctfbackend.controller;
 
 import at.fhtw.ctfbackend.models.LoginCredentials;
 import at.fhtw.ctfbackend.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import at.fhtw.ctfbackend.services.LdapAuthenticationService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +16,13 @@ import java.util.Map;
 @RestController
 public class AuthController {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+    private final LdapAuthenticationService ldapAuthenticationService;
+
+    public AuthController(JwtUtil jwtUtil, LdapAuthenticationService ldapAuthenticationService) {
+        this.jwtUtil = jwtUtil;
+        this.ldapAuthenticationService = ldapAuthenticationService;
+    }
 
     // List of admin usernames - these users will have admin access
     private final String[] adminUsers = {"admin", "superuser"};
@@ -30,14 +37,25 @@ public class AuthController {
     }
 
     @PostMapping("/api/login")
-    public Map<String, Object> login(@RequestBody LoginCredentials credentials, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginCredentials credentials, HttpServletResponse response) {
         Map<String, Object> responseBody = new HashMap<>();
 
-        // Authentication is handled externally by FH Technikum Wien LDAP server
-        // For now, we accept any valid username/password and generate a JWT token
-        // The actual LDAP validation happens at FH's server
-        
         String username = credentials.getUsername();
+        String password = credentials.getPassword();
+
+        try {
+            boolean authenticated = ldapAuthenticationService.authenticate(username, password);
+            if (!authenticated) {
+                responseBody.put("status", "error");
+                responseBody.put("message", "Invalid username or password");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            }
+        } catch (IllegalStateException ex) {
+            responseBody.put("status", "error");
+            responseBody.put("message", "Authentication service temporarily unavailable");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(responseBody);
+        }
+
         boolean isAdmin = isAdminUser(username);
 
         // Generate token with admin information
@@ -57,7 +75,7 @@ public class AuthController {
         responseBody.put("username", username);
         responseBody.put("isAdmin", isAdmin);
 
-        return responseBody;
+        return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/api/logout")
