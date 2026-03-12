@@ -12,12 +12,14 @@ export default function ChallengesPage() {
   const { auth, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [challenges, setChallenges] = useState<Challenge[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !auth.isAuthenticated) {
+      // Ensure we never stay stuck in loading when user is unauthenticated.
+      setLoading(false)
       router.push('/login')
     }
   }, [auth.isAuthenticated, authLoading, router])
@@ -26,6 +28,7 @@ export default function ChallengesPage() {
   useEffect(() => {
     if (auth.isAuthenticated) {
       setLoading(true)
+      setError(null)
       getAllChallenges()
         .then(setChallenges)
         .catch((err) => setError(err.message))

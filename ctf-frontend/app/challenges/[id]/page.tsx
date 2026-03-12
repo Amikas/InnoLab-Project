@@ -15,7 +15,7 @@ export default function ChallengePage() {
   const router = useRouter()
   const params = useParams() // ← Use useParams hook instead
   const [challenge, setChallenge] = useState<Challenge | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [solveStats, setSolveStats] = useState<{ solveCount: number; solvedByUser: boolean } | null>(null)
 
@@ -24,6 +24,8 @@ export default function ChallengePage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !auth.isAuthenticated) {
+      // Stop loading before redirect so the page cannot spin forever.
+      setLoading(false)
       router.push('/login')
     }
   }, [auth.isAuthenticated, authLoading, router])
@@ -31,6 +33,7 @@ export default function ChallengePage() {
     useEffect(() => {
         if (auth.isAuthenticated && challengeId) {
             setLoading(true)
+            setError(null)
 
             Promise.all([
                 getChallenge(challengeId),
@@ -83,6 +86,7 @@ export default function ChallengePage() {
   useEffect(() => {
     if (auth.isAuthenticated && challengeId) {
       setLoading(true)
+      setError(null)
       
       Promise.all([
         getChallenge(challengeId),

@@ -59,20 +59,10 @@ export async function createChallenge(challengeData: CreateChallengeData): Promi
       formData.append('requiresInstance', challengeData.requiresInstance.toString())
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/challenges`,
-      {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      }
-    )
-
-    if (!response.ok) {
-      throw new Error(`Failed to create challenge: ${response.status}`)
-    }
-
-    return response.json()
+    return await apiClient.request<Challenge>('/api/challenges', {
+      method: 'POST',
+      body: formData,
+    })
   } catch (error) {
     console.error('Failed to create challenge:', error)
     throw error
@@ -96,20 +86,10 @@ export async function updateChallenge(id: string, challengeData: Partial<CreateC
       formData.append('requiresInstance', challengeData.requiresInstance.toString())
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/challenges/${id}`,
-      {
-        method: 'PUT',
-        body: formData,
-        credentials: 'include',
-      }
-    )
-
-    if (!response.ok) {
-      throw new Error(`Failed to update challenge: ${response.status}`)
-    }
-
-    return response.json()
+    return await apiClient.request<Challenge>(`/api/challenges/${id}`, {
+      method: 'PUT',
+      body: formData,
+    })
   } catch (error) {
     console.error('Failed to update challenge:', error)
     throw error
@@ -118,41 +98,14 @@ export async function updateChallenge(id: string, challengeData: Partial<CreateC
 
 export async function deleteChallenge(id: string): Promise<void> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/challenges/${id}`,
-      {
-        method: 'DELETE',
-        credentials: 'include',
-      }
-    )
-    
-    // Handle 204 No Content - successful deletion
-    if (response.status === 204) {
-      return
-    }
-    
-    // Handle 404 Not Found
-    if (response.status === 404) {
-      throw new Error('Challenge not found. It may have already been deleted.')
-    }
-    
-    // Handle other non-ok responses
-    if (!response.ok) {
-      throw new Error(`Failed to delete challenge: ${response.status}`)
-    }
-    
-    // Try to parse response if there's content
-    const contentLength = response.headers.get('content-length')
-    if (contentLength && contentLength !== '0') {
-      const text = await response.text()
-      if (text) {
-        return JSON.parse(text)
-      }
-    }
-    
-    return
+    await apiClient.request<void>(`/api/challenges/${id}`, {
+      method: 'DELETE',
+    })
   } catch (error) {
     console.error('Failed to delete challenge:', error)
+    if (error instanceof Error && error.message.includes('404')) {
+      throw new Error('Challenge not found. It may have already been deleted.')
+    }
     if (error instanceof Error) {
       throw error
     }

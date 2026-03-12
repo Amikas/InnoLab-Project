@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      // Backend response is the source of truth for auth state.
       const userInfo = await apiClient.get<UserInfo>('/api/user/me')
       if (userInfo.status === 'success') {
         setAuth({
@@ -61,6 +62,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Not authenticated')
       }
     } catch (error) {
+      // Best effort cleanup: clear stale/expired cookie on backend side.
+      // This prevents "cookie exists but session is invalid" loops.
+      try {
+        await apiClient.post('/api/logout', {})
+      } catch {
+        // Ignore cleanup failures to keep auth check resilient.
+      }
+
       setAuth({
         token: null,
         user: null,

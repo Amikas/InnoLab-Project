@@ -18,6 +18,41 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8080';
 };
 
+function readCookieValue(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+
+    const value = document.cookie
+        .split('; ')
+        .find((entry) => entry.startsWith(`${name}=`))
+        ?.split('=')[1];
+
+    return value ? decodeURIComponent(value) : null;
+}
+
+async function ensureCsrfToken(baseUrl: string): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+
+    // Reuse token cookie when available to avoid an extra network hop.
+    let token = readCookieValue('XSRF-TOKEN');
+    if (token) return token;
+
+    try {
+        await fetch(`${baseUrl}/api/csrf-token`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    } catch {
+        return null;
+    }
+
+    token = readCookieValue('XSRF-TOKEN');
+    return token;
+}
+
+function isMutatingMethod(method: string): boolean {
+    return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+}
+
 // Helper function to extract filename from Content-Disposition header
 function extractFilenameFromHeaders(headers: Headers): string | null {
     const contentDisposition = headers.get('Content-Disposition');
@@ -56,14 +91,26 @@ export class ApiClient {
     // Main request method for JSON responses
     async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const url = `${this.getBaseUrl()}${endpoint}`;
+        const method = (options.method || 'GET').toUpperCase();
+        const headers = new Headers(options.headers || {});
+        const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+        // Let browser define multipart boundaries for FormData automatically.
+        if (!isFormData && !headers.has('Content-Type')) {
+            headers.set('Content-Type', 'application/json');
+        }
+
+        if (isMutatingMethod(method) && !headers.has('X-XSRF-TOKEN')) {
+            const csrfToken = await ensureCsrfToken(this.getBaseUrl());
+            if (csrfToken) {
+                headers.set('X-XSRF-TOKEN', csrfToken);
+            }
+        }
 
         const config: RequestInit = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
-            credentials: 'include', // Send cookies with every request
             ...options,
+            headers,
+            credentials: 'include', // Send cookies with every request
         };
 
         const response = await fetch(url, config);
@@ -73,7 +120,17 @@ export class ApiClient {
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
-        return response.json();
+        if (response.status === 204) {
+            return undefined as T;
+        }
+
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json();
+        }
+
+        const text = await response.text();
+        return text as T;
     }
 
     // Method for blob/binary responses (file downloads)

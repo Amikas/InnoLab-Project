@@ -25,7 +25,7 @@ public class AuthController {
     }
 
     // List of admin usernames - these users will have admin access
-    private final String[] adminUsers = {"admin", "superuser"};
+    private final String[] adminUsers = {"if24b120"};
 
     private boolean isAdminUser(String username) {
         for (String adminUser : adminUsers) {

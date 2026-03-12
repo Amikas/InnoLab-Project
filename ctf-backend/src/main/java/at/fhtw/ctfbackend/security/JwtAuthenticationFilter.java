@@ -31,24 +31,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwtToken = extractTokenFromCookie(request);
 
-        if (jwtToken != null) {
-            String username = jwtUtil.extractUsername(jwtToken);
-            logger.debug("Processing JWT token for user: " + username);
+        if (jwtToken != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (jwtUtil.validateToken(jwtToken)) {
+                try {
+                    String username = jwtUtil.extractUsername(jwtToken);
+                    boolean isAdmin = jwtUtil.isAdminFromToken(jwtToken);
+                    logger.debug("Processing JWT token for user: " + username);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                if (jwtUtil.validateToken(jwtToken)) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    username,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                            );
+                    if (username != null) {
+                        // Always assign ROLE_USER; add ROLE_ADMIN for admin tokens.
+                        List<SimpleGrantedAuthority> authorities = isAdmin
+                                ? List.of(
+                                new SimpleGrantedAuthority("ROLE_USER"),
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
+                        )
+                                : List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        username,
+                                        null,
+                                        authorities
+                                );
 
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                    logger.debug("Authenticated user: " + username);
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                        logger.debug("Authenticated user: " + username);
+                    }
+                } catch (Exception ex) {
+                    logger.debug("Failed to extract username from validated JWT token", ex);
                 }
+            } else {
+                logger.debug("Invalid or expired JWT token in auth_token cookie");
             }
         }
 

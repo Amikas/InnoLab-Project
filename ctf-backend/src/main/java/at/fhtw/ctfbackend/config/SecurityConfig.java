@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,11 +32,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Login/logout must stay usable even when no CSRF cookie exists yet.
+                        .ignoringRequestMatchers("/api/login", "/api/logout", "/ws/**")
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
         // Public (no token needed)
         .requestMatchers("/api/login").permitAll()
+        .requestMatchers("/api/csrf-token").permitAll()
         .requestMatchers("/api/auth/**").permitAll()
         .requestMatchers("/ws/**").permitAll()
         .requestMatchers("/api/categories").permitAll()  // Categories are public (theory content)
@@ -47,9 +53,11 @@ public class SecurityConfig {
         .requestMatchers("/api/solves/total-count").permitAll()  // Total solve count is public
 
         // Protected (token required)
-        .requestMatchers(HttpMethod.POST, "/api/challenges/**").authenticated()
-        .requestMatchers(HttpMethod.PUT, "/api/challenges/**").authenticated()
-        .requestMatchers(HttpMethod.DELETE, "/api/challenges/**").authenticated()
+        .requestMatchers("/api/challenges/admin/**").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, "/api/challenges/**").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.PUT, "/api/challenges/**").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.DELETE, "/api/challenges/**").hasRole("ADMIN")
+        .requestMatchers(HttpMethod.POST, "/api/categories/create").hasRole("ADMIN")
         .requestMatchers("/api/challenges/**").permitAll()
         .requestMatchers("/api/environment/**").authenticated()
         .requestMatchers("/api/flags/**").authenticated()
@@ -77,7 +85,7 @@ public class SecurityConfig {
                 "http://localhost:3002"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cookie", "X-XSRF-TOKEN", "X-CSRF-TOKEN"));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
         configuration.setAllowCredentials(true);
 
