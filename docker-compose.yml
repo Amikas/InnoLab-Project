@@ -37,6 +37,7 @@ services:
       - CONFLUENCE_EMAIL=${CONFLUENCE_EMAIL}
       - CONFLUENCE_API_TOKEN=${CONFLUENCE_API_TOKEN}
       - JWT_SECRET=${JWT_SECRET}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://inno1-bif3-p1-w25.cs.technikum-wien.at:3000,http://inno1-bif3-p1-w25.cs.technikum-wien.at,https://inno1-bif3-p1-w25.cs.technikum-wien.at}
       - DOCKER_HOST=unix:///var/run/docker.sock
       - TERMINAL_GATEWAY_URL=http://terminal:3001
       - TERMINAL_WS_URL=ws://terminal:3001
@@ -66,9 +67,10 @@ services:
     networks:
       - ctf-isolated
     environment:
-      - API_URL=http://app:8080
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
-      - TERMINAL_WS_URL=ws://localhost:3001
+      - API_URL=${API_URL:-http://app:8080}
+      - API_PROXY_TARGET=${API_PROXY_TARGET:-http://app:8080}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-}
+      - TERMINAL_WS_URL=${TERMINAL_WS_URL:-ws://localhost:3001}
     depends_on:
       - app
       - terminal

@@ -5,7 +5,7 @@ const getApiBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_API_URL) {
         // If we're on the server (SSR), use the internal Docker service name
         if (typeof window === 'undefined') {
-            return process.env.API_URL || 'http://app:8080';
+            return process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
         }
         // If we're in the browser, use the public URL
         return process.env.NEXT_PUBLIC_API_URL;
@@ -14,8 +14,8 @@ const getApiBaseUrl = () => {
     if (typeof window === 'undefined') {
         return process.env.API_URL || 'http://app:8080';
     }
-    // If running in browser, use localhost
-    return 'http://localhost:8080';
+    // In browser, default to same-origin. Next.js rewrite can proxy /api to backend.
+    return '';
 };
 
 function readCookieValue(name: string): string | null {

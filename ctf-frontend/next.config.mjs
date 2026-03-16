@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const apiProxyTarget = (process.env.API_PROXY_TARGET || process.env.API_URL || 'http://localhost:8080').replace(/\/$/, '')
+
 const nextConfig = {
   output: 'standalone',
   // Enable React strict mode for better development experience
@@ -23,6 +25,15 @@ const nextConfig = {
       },
     ],
     unoptimized: true,
+  },
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiProxyTarget}/api/:path*`,
+      },
+    ]
   },
 }
 
