@@ -29,23 +29,35 @@ function readCookieValue(name: string): string | null {
     return value ? decodeURIComponent(value) : null;
 }
 
-async function ensureCsrfToken(baseUrl: string): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
+async function ensureCsrfToken(baseUrl: string): Promise<string> {
+    if (typeof window === 'undefined') {
+        throw new Error('CSRF token cannot be obtained on server side');
+    }
 
     // Reuse token cookie when available to avoid an extra network hop.
     let token = readCookieValue('XSRF-TOKEN');
+    console.log('[CSRF DEBUG] Initial token from cookie:', token);
     if (token) return token;
 
-    try {
-        await fetch(`${baseUrl}/api/csrf-token`, {
-            method: 'GET',
-            credentials: 'include',
-        });
-    } catch {
-        return null;
+    // Fetch new token
+    console.log('[CSRF DEBUG] Fetching CSRF token from:', `${baseUrl}/api/csrf-token`);
+    const response = await fetch(`${baseUrl}/api/csrf-token`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+
+    console.log('[CSRF DEBUG] CSRF fetch response status:', response.status);
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch CSRF token: ${response.status}`);
     }
 
     token = readCookieValue('XSRF-TOKEN');
+    console.log('[CSRF DEBUG] Token after fetch:', token);
+    if (!token) {
+        throw new Error('CSRF token cookie not set after fetch');
+    }
+
     return token;
 }
 
@@ -101,10 +113,11 @@ export class ApiClient {
         }
 
         if (isMutatingMethod(method) && !headers.has('X-XSRF-TOKEN')) {
-            const csrfToken = await ensureCsrfToken(this.getBaseUrl());
-            if (csrfToken) {
-                headers.set('X-XSRF-TOKEN', csrfToken);
-            }
+            const baseUrl = this.getBaseUrl();
+            console.log('[CSRF DEBUG] Base URL:', baseUrl);
+            const csrfToken = await ensureCsrfToken(baseUrl);
+            console.log('[CSRF DEBUG] Setting header X-XSRF-TOKEN:', csrfToken);
+            headers.set('X-XSRF-TOKEN', csrfToken);
         }
 
         const config: RequestInit = {
