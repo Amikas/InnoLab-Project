@@ -1,7 +1,7 @@
 package at.fhtw.ctfbackend.controller;
 
 
-import at.fhtw.ctfbackend.models.Category;
+import at.fhtw.ctfbackend.dto.CategoryDto;
 import at.fhtw.ctfbackend.services.CategoryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public List<Category> getCategories() {return categoryService.listAll();}
+    public List<CategoryDto> getCategories() {return categoryService.listAll();}
 
     @PostMapping("/create")
     public String createCategory(@RequestBody String body) throws JsonProcessingException {

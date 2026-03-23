@@ -1,5 +1,6 @@
 package at.fhtw.ctfbackend.controller;
 
+import at.fhtw.ctfbackend.dto.ChallengeInstanceResponse;
 import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
 import at.fhtw.ctfbackend.services.EnvironmentService;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +29,19 @@ public class EnvironmentController {
 
         ChallengeInstanceEntity inst = envService.startEnvironment(username, challengeId);
 
-        return ResponseEntity.ok(Map.of(
-                "instanceId", inst.getInstanceId(),
-                "sshPort", inst.getSshPort(),
-                "expiresAt", inst.getExpiresAt(),
-                "status", inst.getStatus()
-        ));
+        ChallengeInstanceResponse response = new ChallengeInstanceResponse(
+                inst.getInstanceId(),
+                inst.getUsername(),
+                inst.getChallengeId(),
+                inst.getContainerName(),
+                inst.getFlagHash(),
+                inst.getCreatedAt(),
+                inst.getExpiresAt(),
+                inst.getStatus(),
+                inst.getSshPort()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     // 2) Optional: Get instance status
@@ -44,7 +52,19 @@ public class EnvironmentController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(inst);
+        ChallengeInstanceResponse response = new ChallengeInstanceResponse(
+                inst.getInstanceId(),
+                inst.getUsername(),
+                inst.getChallengeId(),
+                inst.getContainerName(),
+                inst.getFlagHash(),
+                inst.getCreatedAt(),
+                inst.getExpiresAt(),
+                inst.getStatus(),
+                inst.getSshPort()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     // 3) Optional: Stop environment
@@ -67,13 +87,19 @@ public class EnvironmentController {
         try {
             ChallengeInstanceEntity inst = envService.buildAndStartChallenge(username, challengeId);
 
-            return ResponseEntity.ok(Map.of(
-                    "instanceId", inst.getInstanceId(),
-                    "sshPort", inst.getSshPort(),
-                    "expiresAt", inst.getExpiresAt(),
-                    "status", inst.getStatus(),
-                    "message", "Challenge built and started successfully"
-            ));
+            ChallengeInstanceResponse response = new ChallengeInstanceResponse(
+                    inst.getInstanceId(),
+                    inst.getUsername(),
+                    inst.getChallengeId(),
+                    inst.getContainerName(),
+                    inst.getFlagHash(),
+                    inst.getCreatedAt(),
+                    inst.getExpiresAt(),
+                    inst.getStatus(),
+                    inst.getSshPort()
+            );
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of(

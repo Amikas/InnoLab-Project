@@ -1,6 +1,6 @@
 package at.fhtw.ctfbackend.controller;
 
-import at.fhtw.ctfbackend.models.LoginCredentials;
+import at.fhtw.ctfbackend.dto.LoginCredentialsDto;
 import at.fhtw.ctfbackend.security.JwtUtil;
 import at.fhtw.ctfbackend.services.LdapAuthenticationService;
 import org.springframework.http.HttpStatus;
@@ -37,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/api/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginCredentials credentials, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginCredentialsDto credentials, HttpServletResponse response) {
         Map<String, Object> responseBody = new HashMap<>();
 
         String username = credentials.getUsername();

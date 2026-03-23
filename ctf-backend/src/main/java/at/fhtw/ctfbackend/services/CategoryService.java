@@ -2,7 +2,7 @@ package at.fhtw.ctfbackend.services;
 
 import at.fhtw.ctfbackend.entity.CategoryEntity;
 import at.fhtw.ctfbackend.external.ConfluenceClient;
-import at.fhtw.ctfbackend.models.Category;
+import at.fhtw.ctfbackend.dto.CategoryDto;
 import at.fhtw.ctfbackend.repository.CategoryRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,9 +39,9 @@ public class CategoryService {
      *
      * @return List of all categories as model objects
      */
-    public List<Category> listAll() {
+    public List<CategoryDto> listAll() {
         return categoryRepository.findAll().stream()
-                .map(this::toModel)
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -186,8 +186,8 @@ public class CategoryService {
      * @param entity Entity from database
      * @return Category model object
      */
-    private Category toModel(CategoryEntity entity) {
-        return new Category(
+    private CategoryDto toDto(CategoryEntity entity) {
+        return new CategoryDto(
                 entity.getId(),
                 entity.getName(),
                 entity.getSummary(),

@@ -1,6 +1,6 @@
 package at.fhtw.ctfbackend.controller;
 
-import at.fhtw.ctfbackend.entity.Solve;
+import at.fhtw.ctfbackend.dto.SolveResponse;
 import at.fhtw.ctfbackend.services.SolveService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,9 +26,9 @@ public class SolveController {
      * @return List of solved challenges
      */
     @GetMapping("/me")
-    public ResponseEntity<List<Solve>> getMySolves(Authentication auth) {
+    public ResponseEntity<List<SolveResponse>> getMySolves(Authentication auth) {
         String username = auth.getName();
-        List<Solve> solves = solveService.getSolvedChallengesByUser(username);
+        List<SolveResponse> solves = solveService.getSolvedChallengesByUser(username);
         return ResponseEntity.ok(solves);
     }
 
@@ -38,8 +38,8 @@ public class SolveController {
      * @return List of solves for the challenge
      */
     @GetMapping("/challenge/{challengeId}")
-    public ResponseEntity<List<Solve>> getSolversForChallenge(@PathVariable String challengeId) {
-        List<Solve> solves = solveService.getSolversForChallenge(challengeId);
+    public ResponseEntity<List<SolveResponse>> getSolversForChallenge(@PathVariable String challengeId) {
+        List<SolveResponse> solves = solveService.getSolversForChallenge(challengeId);
         return ResponseEntity.ok(solves);
     }
 
@@ -77,8 +77,8 @@ public class SolveController {
      * @return List of recent solves
      */
     @GetMapping("/recent")
-    public ResponseEntity<List<Solve>> getRecentSolves(@RequestParam(defaultValue = "10") int limit) {
-        List<Solve> recentSolves = solveService.getRecentSolves(limit);
+    public ResponseEntity<List<SolveResponse>> getRecentSolves(@RequestParam(defaultValue = "10") int limit) {
+        List<SolveResponse> recentSolves = solveService.getRecentSolves(limit);
         return ResponseEntity.ok(recentSolves);
     }
 
@@ -110,8 +110,8 @@ public class SolveController {
      * @return List of solves in the specified category
      */
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Solve>> getSolvesByCategory(@PathVariable String category) {
-        List<Solve> solves = solveService.getSolvesByCategory(category);
+    public ResponseEntity<List<SolveResponse>> getSolvesByCategory(@PathVariable String category) {
+        List<SolveResponse> solves = solveService.getSolvesByCategory(category);
         return ResponseEntity.ok(solves);
     }
 
@@ -121,8 +121,8 @@ public class SolveController {
      * @return List of solves with the specified difficulty
      */
     @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<Solve>> getSolvesByDifficulty(@PathVariable String difficulty) {
-        List<Solve> solves = solveService.getSolvesByDifficulty(difficulty);
+    public ResponseEntity<List<SolveResponse>> getSolvesByDifficulty(@PathVariable String difficulty) {
+        List<SolveResponse> solves = solveService.getSolvesByDifficulty(difficulty);
         return ResponseEntity.ok(solves);
     }
 
@@ -133,14 +133,14 @@ public class SolveController {
      * @return List of solves within the time range
      */
     @GetMapping("/time-range")
-    public ResponseEntity<List<Solve>> getSolvesByTimeRange(
+    public ResponseEntity<List<SolveResponse>> getSolvesByTimeRange(
             @RequestParam String start,
             @RequestParam String end) {
         
         LocalDateTime startTime = LocalDateTime.parse(start);
         LocalDateTime endTime = LocalDateTime.parse(end);
         
-        List<Solve> solves = solveService.getSolvesByTimeRange(startTime, endTime);
+        List<SolveResponse> solves = solveService.getSolvesByTimeRange(startTime, endTime);
         return ResponseEntity.ok(solves);
     }
 

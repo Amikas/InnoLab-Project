@@ -1,11 +1,11 @@
-package at.fhtw.ctfbackend.models;
+package at.fhtw.ctfbackend.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class Challenge {
+public class ChallengeDto {
     private String id;
     private String title;
     private String description;
@@ -14,21 +14,15 @@ public class Challenge {
     private Integer points;
     private String downloadUrl;
     private String originalFilename;
-
-    // New fields for instance-based challenges
     private Boolean solved = false;
     private Boolean requiresInstance = false;
-
     private String[] hints;
-
-    // New fields for file storage
     private String challengeFolderPath;
     private String dockerFilesJson;
 
-    // Updated constructor with all fields
-    public Challenge(String id, String title, String description,
-                     String category, String difficulty, Integer points,
-                     String downloadUrl, String originalFilename) {
+    public ChallengeDto(String id, String title, String description,
+                        String category, String difficulty, Integer points,
+                        String downloadUrl, String originalFilename) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -39,11 +33,10 @@ public class Challenge {
         this.originalFilename = originalFilename;
     }
 
-    // Optional: Add a full constructor if needed
-    public Challenge(String id, String title, String description,
-                     String category, String difficulty, Integer points,
-                     String downloadUrl, String originalFilename,
-                     Boolean requiresInstance) {
+    public ChallengeDto(String id, String title, String description,
+                        String category, String difficulty, Integer points,
+                        String downloadUrl, String originalFilename,
+                        Boolean requiresInstance) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -55,14 +48,13 @@ public class Challenge {
         this.requiresInstance = requiresInstance != null ? requiresInstance : false;
     }
 
-    // Additional constructor with all fields
-    public Challenge(String id, String title, String description,
-                     String category, String difficulty, Integer points,
-                     String downloadUrl, String originalFilename,
-                     Boolean requiresInstance,
-                     String challengeFolderPath,
-                     String dockerFilesJson,
-                     String[] hints) {
+    public ChallengeDto(String id, String title, String description,
+                        String category, String difficulty, Integer points,
+                        String downloadUrl, String originalFilename,
+                        Boolean requiresInstance,
+                        String challengeFolderPath,
+                        String dockerFilesJson,
+                        String[] hints) {
         this.id = id;
         this.title = title;
         this.description = description;

@@ -1,21 +1,18 @@
-package at.fhtw.ctfbackend.models;
+package at.fhtw.ctfbackend.dto;
 
-public class LoginCredentials {
+public class LoginCredentialsDto {
     private String username;
     private String password;
     private boolean isAdmin;
 
-    // Add default constructor
-    public LoginCredentials() {
+    public LoginCredentialsDto() {
     }
 
-    // Add parameterized constructor if needed
-    public LoginCredentials(String username, String password) {
+    public LoginCredentialsDto(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    // getters and setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 

@@ -1,6 +1,6 @@
 package at.fhtw.ctfbackend.controller;
 
-import at.fhtw.ctfbackend.models.SubmitFlagRequest;
+import at.fhtw.ctfbackend.dto.SubmitFlagRequestDto;
 import at.fhtw.ctfbackend.services.FlagService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ public class FlagController {
     @Transactional  //  Add this annotation
     public ResponseEntity<Map<String, Object>> submitFlag(
             Authentication auth,
-            @RequestBody SubmitFlagRequest request) {
+            @RequestBody SubmitFlagRequestDto request) {
 
         String username = auth.getName();
         String challengeId = request.getChallengeId();

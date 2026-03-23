@@ -1,6 +1,6 @@
 package at.fhtw.ctfbackend.controller;
 
-import at.fhtw.ctfbackend.models.Challenge;
+import at.fhtw.ctfbackend.dto.ChallengeDto;
 import at.fhtw.ctfbackend.services.ChallengeService;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
@@ -22,14 +22,14 @@ public class ChallengeController {
     }
 
     @GetMapping
-    public List<Challenge> getChallenges() {
+    public List<ChallengeDto> getChallenges() {
         return challengeService.listAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Challenge> getChallenge(@PathVariable String id) {
+    public ResponseEntity<ChallengeDto> getChallenge(@PathVariable String id) {
         try {
-            Challenge challenge = challengeService.getChallengeById(id);
+            ChallengeDto challenge = challengeService.getChallengeById(id);
             return ResponseEntity.ok(challenge);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -170,7 +170,7 @@ public class ChallengeController {
             System.out.println("hints: " + (hints != null ? hints.length : 0));
             System.out.println("=== END DEBUG ===");
 
-            Challenge createdChallenge = challengeService.createChallenge(
+            ChallengeDto createdChallenge = challengeService.createChallenge(
                     title, description, category, difficulty, points, flag,
                     downloadFile, requiresInstanceBoolean, dockerFiles, hints
             );
@@ -190,7 +190,7 @@ public class ChallengeController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Challenge> updateChallenge(
+    public ResponseEntity<ChallengeDto> updateChallenge(
             @PathVariable String id,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
@@ -208,7 +208,7 @@ public class ChallengeController {
             // Convert string to boolean for update as well
             Boolean requiresInstanceBoolean = requiresInstance != null ? Boolean.parseBoolean(requiresInstance) : null;
             
-            Challenge updatedChallenge = challengeService.updateChallenge(
+            ChallengeDto updatedChallenge = challengeService.updateChallenge(
                     id, title, description, category, difficulty, points, flag,
                     downloadFile, requiresInstanceBoolean, dockerFiles, hints
             );

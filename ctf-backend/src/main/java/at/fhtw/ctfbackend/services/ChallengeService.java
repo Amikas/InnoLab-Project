@@ -1,7 +1,7 @@
 package at.fhtw.ctfbackend.services;
 
 import at.fhtw.ctfbackend.entity.ChallengeEntity;
-import at.fhtw.ctfbackend.models.Challenge;
+import at.fhtw.ctfbackend.dto.ChallengeDto;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -30,9 +30,9 @@ public class ChallengeService {
     /**
      * List all challenges for the API.
      */
-    public List<Challenge> listAll() {
+    public List<ChallengeDto> listAll() {
         return repo.findAll().stream()
-                .map(this::toModel)
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -47,7 +47,7 @@ public class ChallengeService {
     }
 
     @Transactional
-    public Challenge createChallenge(String title, String description, String category,
+    public ChallengeDto createChallenge(String title, String description, String category,
                                      String difficulty, Integer points, String flag,
                                      MultipartFile downloadFile,
                                      Boolean requiresInstance,
@@ -172,7 +172,7 @@ public class ChallengeService {
             System.out.println("=== END DEBUG ===");
             
             System.out.println("Challenge created: " + challengeId);
-            return toModel(savedEntity);
+            return toDto(savedEntity);
         } catch (Exception e) {
             System.err.println("Failed to save challenge: " + e.getMessage());
             e.printStackTrace();
@@ -184,7 +184,7 @@ public class ChallengeService {
      * Update an existing challenge with file support
      */
     @Transactional
-    public Challenge updateChallenge(String id, String title, String description, String category,
+    public ChallengeDto updateChallenge(String id, String title, String description, String category,
                                      String difficulty, Integer points, String flag,
                                      MultipartFile downloadFile,
                                      Boolean requiresInstance,
@@ -239,7 +239,7 @@ public class ChallengeService {
 
         ChallengeEntity updatedEntity = repo.save(existingEntity);
         System.out.println("Challenge updated: " + id);
-        return toModel(updatedEntity);
+        return toDto(updatedEntity);
     }
 
     /**
@@ -336,9 +336,9 @@ public class ChallengeService {
     }
 
     @Transactional(readOnly = true)
-    public Challenge getChallengeById(String id) {
+    public ChallengeDto getChallengeById(String id) {
         return repo.findById(id)
-                .map(this::toModel)
+                .map(this::toDto)
                 .orElseThrow(() -> new RuntimeException("Challenge not found: " + id));
     }
 
@@ -349,46 +349,36 @@ public class ChallengeService {
         return entity.getOriginalFilename();
     }
 
-    private Challenge toModel(ChallengeEntity e) {
+    private ChallengeDto toDto(ChallengeEntity e) {
         if (e.getId() == null) {
-            throw new IllegalStateException("Entity has no ID — cannot map to model");
+            throw new IllegalStateException("Entity has no ID — cannot map to DTO");
         }
 
-        // Only create download URL if there's a file
         String downloadUrl = null;
         if (e.getDownloadZip() != null && e.getDownloadZip().length > 0) {
             downloadUrl = "http://localhost:8080/api/challenges/" + e.getId() + "/download";
         }
 
-        // Create challenge with full constructor
-        Challenge challenge = new Challenge(
+        ChallengeDto challenge = new ChallengeDto(
                 e.getId(),
                 e.getTitle(),
                 e.getDescription(),
                 e.getCategory(),
                 e.getDifficulty(),
                 e.getPoints(),
-                downloadUrl, // Can be null
+                downloadUrl,
                 e.getOriginalFilename()
         );
 
-        // Set additional fields
-        boolean entityRequiresInstance = e.isRequiresInstance();
-        System.out.println("DEBUG: toModel - entity requiresInstance: " + entityRequiresInstance);
-        challenge.setRequiresInstance(entityRequiresInstance);
-        System.out.println("DEBUG: toModel - challenge requiresInstance after setting: " + challenge.getRequiresInstance());
-
-        // Set file information
+        challenge.setRequiresInstance(e.isRequiresInstance());
         challenge.setChallengeFolderPath(e.getChallengeFolderPath());
         challenge.setDockerFilesJson(e.getDockerFilesJson());
 
-        // Set hints
         if (e.getHintsJson() != null && !e.getHintsJson().isEmpty()) {
             try {
                 String[] hints = objectMapper.readValue(e.getHintsJson(), String[].class);
                 challenge.setHints(hints);
             } catch (IOException ex) {
-                // If JSON parsing fails, set empty array
                 challenge.setHints(new String[0]);
             }
         } else {
