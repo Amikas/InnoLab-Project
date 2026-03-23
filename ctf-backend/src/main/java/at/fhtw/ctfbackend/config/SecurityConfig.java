@@ -1,6 +1,7 @@
 package at.fhtw.ctfbackend.config;
 
 import at.fhtw.ctfbackend.security.JwtAuthenticationFilter;
+import at.fhtw.ctfbackend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,18 +25,23 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtUtil jwtUtil;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtUtil jwtUtil,
             @Value("${app.cors.allowed-origins:http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002}") String allowedOriginsRaw
     ) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtUtil = jwtUtil;
         this.allowedOrigins = Arrays.stream(allowedOriginsRaw.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toList();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil);
     }
 
     @Bean
@@ -47,20 +53,19 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-        // Public (no token needed)
+        // Public (no token needed) - MUST be first and exact match
+        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
         .requestMatchers("/api/login").permitAll()
         .requestMatchers("/api/csrf-token").permitAll()
         .requestMatchers("/api/auth/**").permitAll()
         .requestMatchers("/ws/**").permitAll()
-        .requestMatchers("/api/categories").permitAll()  // Categories are public (theory content)
-        .requestMatchers("/api/solves/challenge/*/stats").permitAll()  // Challenge stats are public
-        .requestMatchers("/api/solves/challenge/*/count").permitAll()  // Challenge solve counts are public
-        .requestMatchers("/api/solves/recent").permitAll()  // Recent solves are public
-        .requestMatchers("/api/solves/top-solvers").permitAll()  // Top solvers are public
-        .requestMatchers("/api/solves/most-solved").permitAll()  // Most solved challenges are public
-        .requestMatchers("/api/solves/total-count").permitAll()  // Total solve count is public
-
-        // Protected (token required)
+        .requestMatchers("/api/categories").permitAll()
+        .requestMatchers("/api/solves/challenge/*/stats").permitAll()
+        .requestMatchers("/api/solves/challenge/*/count").permitAll()
+        .requestMatchers("/api/solves/recent").permitAll()
+        .requestMatchers("/api/solves/top-solvers").permitAll()
+        .requestMatchers("/api/solves/most-solved").permitAll()
+        .requestMatchers("/api/solves/total-count").permitAll()
         .requestMatchers("/api/challenges/admin/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, "/api/challenges/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.PUT, "/api/challenges/**").hasRole("ADMIN")
@@ -71,16 +76,15 @@ public class SecurityConfig {
         .requestMatchers("/api/flags/**").authenticated()
         .requestMatchers("/api/user/me").authenticated()
         .requestMatchers("/api/files/**").authenticated()
-        .requestMatchers("/api/solves/me").authenticated()  // User's own solves require auth
-        .requestMatchers("/api/solves/check/**").authenticated()  // Checking if user solved requires auth
-        .requestMatchers("/api/solves/me/**").authenticated()  // User's own stats require auth
-
+        .requestMatchers("/api/solves/me").authenticated()
+        .requestMatchers("/api/solves/check/**").authenticated()
+        .requestMatchers("/api/solves/me/**").authenticated()
         .anyRequest().authenticated()
 )
 
 
                 .formLogin(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -97,5 +101,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
     }
 }
