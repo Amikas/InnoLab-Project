@@ -62,8 +62,8 @@ export default function Navbar() {
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4">
-            <div className="hidden md:flex items-center mr-2">
+          <div className="cursor-pointer hidden md:flex items-center gap-4">
+            <div className=" hidden md:flex items-center mr-2">
               <ThemeToggle />
             </div>
             {auth.isAuthenticated && auth.isAdmin && (
@@ -128,7 +128,7 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-4 border-t border-border space-y-3">
+            <div className="cursor-pointer pt-4 border-t border-border space-y-3">
               <div className="px-2">
                 <ThemeToggle />
               </div>

@@ -11,7 +11,6 @@ import {
   ListChecks,
   Target,
   Bug,
-  Shield,
   Wrench
 } from "lucide-react"
 import { getCourseBySlug, Lesson } from "@/lib/api/courses"
@@ -21,8 +20,6 @@ import LessonContent from "@/components/lesson-content"
 import { ProgressIndicator } from "@/components/lesson/progress-indicator"
 import { TableOfContents } from "@/components/lesson/table-of-contents"
 import { LessonNav, getAdjacentLessons } from "@/components/lesson/lesson-nav"
-import { Callout } from "@/components/lesson/callout"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -71,11 +68,11 @@ function findLesson(modules: any[], lessonId: number): Lesson | null {
 
 function getDifficultyColor(difficulty: string | null): string {
   const colors: Record<string, string> = {
-    'Beginner': 'bg-green-500/10 text-green-500 border-green-500/20',
-    'Intermediate': 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    'Advanced': 'bg-red-500/10 text-red-500 border-red-500/20',
+    'Beginner': 'text-green-400',
+    'Intermediate': 'text-yellow-400',
+    'Advanced': 'text-red-400',
   }
-  return colors[difficulty || ''] || 'bg-muted text-muted-foreground border-border'
+  return colors[difficulty || ''] || 'text-muted-foreground'
 }
 
 // Calculate total lessons in course
@@ -144,9 +141,9 @@ export default async function LessonDetailPage({ params }: Props) {
               {/* Meta badges */}
               <div className="flex flex-wrap items-center gap-3">
                 {course.difficulty && (
-                  <Badge variant="outline" className={getDifficultyColor(course.difficulty)}>
+                  <span className={`text-base font-medium ${getDifficultyColor(course.difficulty)}`}>
                     {course.difficulty}
-                  </Badge>
+                  </span>
                 )}
                 {course.estimatedMinutes && (
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -182,15 +179,17 @@ export default async function LessonDetailPage({ params }: Props) {
       
       {/* Warning callout for security content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Callout type="warning" title="Educational Purpose Only">
-          The code examples in this lesson demonstrate vulnerabilities for educational purposes. 
-          Never use these techniques on systems without explicit authorization.
-        </Callout>
+        <div className="flex flex-col gap-2 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold text-red-400">Educational Purpose Only</span>
+          </div>
+          <span className="text-base text-white">The code examples in this lesson demonstrate vulnerabilities for educational purposes. Never use these techniques on systems without explicit authorization.</span>
+        </div>
       </div>
       
       {/* Main content area with TOC sidebar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           {/* Main content */}
           <main className="flex-1 min-w-0 lg:max-w-4xl">
             {/* Theory Section */}
@@ -326,7 +325,7 @@ export default async function LessonDetailPage({ params }: Props) {
           </main>
           
           {/* TOC Sidebar - Desktop only */}
-          <aside className="hidden lg:block w-56 shrink-0">
+          <aside className="hidden lg:block w-56 shrink-0 sticky top-24">
             <TableOfContents headings={headings} />
           </aside>
         </div>

@@ -29,20 +29,10 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   }
 }
 
-// Map frontend category names to backend category IDs
-const categoryIdMap: Record<string, string> = {
-  'cryptography': 'crypto',
-  'web-exploitation': 'web',
-  'binary-exploitation': 'pwn',
-  'reverse-engineering': 'rev',
-  'forensics': 'forensics',
-}
-
 // Get category by frontend category name
 export async function getCategoryByFrontendName(frontendCategory: string): Promise<Category | null> {
   try {
-    const backendId = categoryIdMap[frontendCategory] || frontendCategory
-    return await getCategoryById(backendId)
+    return await getCategoryById(frontendCategory)
   } catch (error) {
     console.error('Failed to fetch category by frontend name:', error)
     return null

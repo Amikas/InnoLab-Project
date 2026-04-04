@@ -71,7 +71,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
 
   // Desktop TOC
   const DesktopTOC = () => (
-    <nav className="sticky top-24 space-y-1 max-h-[calc(100vh-8rem)] overflow-y-auto">
+    <nav className="sticky top-24 space-y-1 max-h-[calc(100vh-10rem)] overflow-y-auto">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
         On this page
       </p>
@@ -80,7 +80,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
           <button
             onClick={() => scrollToHeading(heading.id)}
             className={cn(
-              'block w-full text-left py-1.5 text-sm transition-colors',
+              'block w-full text-left py-1.5 text-sm transition-colors cursor-pointer',
               activeId === heading.id
                 ? 'text-primary font-medium'
                 : 'text-muted-foreground hover:text-foreground'
@@ -100,7 +100,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
                 key={h3.id}
                 onClick={() => scrollToHeading(h3.id)}
                 className={cn(
-                  'block w-full text-left py-1 pl-4 text-sm transition-colors',
+                  'block w-full text-left py-1 pl-4 text-sm transition-colors cursor-pointer',
                   activeId === h3.id
                     ? 'text-primary font-medium'
                     : 'text-muted-foreground/70 hover:text-foreground'
@@ -163,7 +163,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
               key={heading.id}
               onClick={() => scrollToHeading(heading.id)}
               className={cn(
-                'block w-full text-left py-2 text-sm transition-colors',
+                'block w-full text-left py-2 text-sm transition-colors cursor-pointer',
                 heading.level === 3 && 'pl-4 text-muted-foreground/70',
                 activeId === heading.id
                   ? 'text-primary font-medium'

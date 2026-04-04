@@ -121,11 +121,11 @@ public class DataLoader {
             }
 
             List<CategoryEntity> categories = List.of(
-                    new CategoryEntity("crypto", "Cryptography", "Learn cryptographic fundamentals and techniques.", ""),
-                    new CategoryEntity("web", "Web-Exploitation", "Discover and exploit web application vulnerabilities.", ""),
-                    new CategoryEntity("pwn", "Binary-Exploitation", "Exploit memory corruption vulnerabilities in binaries.", ""),
+                    new CategoryEntity("cryptography", "Cryptography", "Learn cryptographic fundamentals and techniques.", ""),
+                    new CategoryEntity("web-exploitation", "Web-Exploitation", "Discover and exploit web application vulnerabilities.", ""),
+                    new CategoryEntity("binary-exploitation", "Binary-Exploitation", "Exploit memory corruption vulnerabilities in binaries.", ""),
                     new CategoryEntity("forensics", "Forensics", "Investigate digital evidence and recover hidden data.", ""),
-                    new CategoryEntity("rev", "Reverse Engineering", "Analyze binaries and understand compiled code.", "")
+                    new CategoryEntity("reverse-engineering", "Reverse Engineering", "Analyze binaries and understand compiled code.", "")
             );
 
             repo.saveAll(categories);
@@ -133,19 +133,20 @@ public class DataLoader {
         };
     }
 
-    @Bean
-    CommandLineRunner loadCourses(CourseRepository courseRepo) {
-        return args -> {
-            if (courseRepo.count() > 0) {
-                System.out.println("Courses already exist, skipping initialization.");
-                return;
-            }
-
-            List<CourseEntity> courses = createSampleCourses();
-            courseRepo.saveAll(courses);
-            System.out.println("Initialized " + courses.size() + " courses.");
-        };
-    }
+// Course seeding removed - use seed-courses.sh script instead
+//    @Bean
+//    CommandLineRunner loadCourses(CourseRepository courseRepo) {
+//        return args -> {
+//            if (courseRepo.count() > 0) {
+//                System.out.println("Courses already exist, skipping initialization.");
+//                return;
+//            }
+//
+//            List<CourseEntity> courses = createSampleCourses();
+//            courseRepo.saveAll(courses);
+//            System.out.println("Initialized " + courses.size() + " courses.");
+//        };
+//    }
 
     private List<CourseEntity> createSampleCourses() {
         List<CourseEntity> courses = new ArrayList<>();
