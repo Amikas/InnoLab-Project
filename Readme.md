@@ -1,5 +1,4 @@
 
-
 # InnoLab CTF Platform
 
 A Capture-the-Flag (CTF) training platform designed for **FH Technikum Wien students**.
@@ -7,21 +6,15 @@ The project provides an environment where users can practice cybersecurity skill
 
 ---
 
-
 ## Getting Started
 
 ### Prerequisites
 
 * Docker
-* Confluence API credentials (see [CONFLUENCE_SETUP.md](./CONFLUENCE_SETUP.md))
 
 ### Run the Platform
 
-1. **Set up Confluence credentials** (required for category theory content):
-   - See [CONFLUENCE_SETUP.md](./CONFLUENCE_SETUP.md) for detailed instructions
-   - Create a `.env` file in the project root with your Confluence credentials
-
-2. **Start the application:**
+1. **Start the application:**
    ```bash
    docker compose build 
    docker compose up -d
@@ -46,7 +39,3 @@ The project provides an environment where users can practice cybersecurity skill
 ## Notice
 
 This project is part of the **FH Technikum Wien** InnoLab program.
-
-
-
-

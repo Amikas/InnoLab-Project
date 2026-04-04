@@ -66,7 +66,6 @@ Testing covers backend & frontend REST API endpoints, authentication, challenge 
 - Performance/Load testing (future work)
 - User registration (students use FH accounts)
 - Docker container testing
-- Confluence integration testing
 
 ---
 
@@ -353,7 +352,6 @@ Complete documentation
 - FH LDAP server is available in production
 - Challenge files (ZIPs) are provided in `src/main/resources/files/`
 - PostgreSQL database is configured in production
-- Confluence API is optional (not critical for testing)
 
 ### 13.2 Dependencies
 - Spring Boot 3.2+ installed
@@ -396,7 +394,6 @@ Certain classes are excluded from code coverage analysis to maintain meaningful 
 - Model/DTO classes (Category, Challenge, etc.)
 - Configuration classes (SecurityConfig, etc.)
 - Main application class (CtfBackendApplication)
-- External API clients (ConfluenceClient)
 ```
 
 ### C. Test Data Locations

@@ -139,8 +139,8 @@ Includes detailed steps, expected results, and pass/fail status.
 |-------------------------------------------------------------------------|--------------|
 | API endpoints & Frontend (`/api/challenges`, `/api/flags/submit`, etc.) |  |
 | FH LDAP Authentication                                                  | Registration (handled externally by FH) |
-| Database integration                                                    | External Confluence API reliability |
-| File operations                                                         | UI/UX validation |
+| Database integration                                                    | UI/UX validation |
+| File operations                                                         |
 
 
 ---
@@ -260,7 +260,6 @@ methodName_StateUnderTest_ExpectedBehavior
 | **DTOs** | `Category`, `Challenge`, `FlagDTO` | No logic |
 | **Config Classes** | `LdapConfig`, `SecurityConfig` | Verified indirectly |
 | **Main Class** | `CtfBackendApplication` | Bootstraps only |
-| **External Clients** | `ConfluenceClient` | Mocked in integration |
 
 ---
 

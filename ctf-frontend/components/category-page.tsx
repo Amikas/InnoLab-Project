@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowLeft, BookOpen, ExternalLink } from "lucide-react"
+import { ArrowLeft, BookOpen } from "lucide-react"
 import ChallengeList from "@/components/challenge-list"
 import { getChallengesByCategory } from "@/lib/api/challenges"
 import { getCategoryByFrontendName } from "@/lib/api/categories"
@@ -13,7 +13,7 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ category, title, description, color }: CategoryPageProps) {
-  // Fetch both challenges and category data (theory from Confluence)
+  // Fetch both challenges and category data (theory content)
   let challenges: Challenge[] = []
   let categoryData: any = null
 
@@ -71,50 +71,26 @@ export default async function CategoryPage({ category, title, description, color
                   <div className="text-muted-foreground mb-1">Total Points</div>
                   <div className="font-semibold">{challenges.length > 0 ? challenges.reduce((sum, c) => sum + c.points, 0) : 'N/A'} pts</div>
                 </div>
-                {categoryData?.fileUrl && (
-                  <div className="pt-4 border-t border-border">
-                    <a
-                      href={categoryData.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-primary hover:underline text-sm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      View in Confluence
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
           <div className="lg:col-span-3 space-y-8">
-            {/* Theory Section from Confluence - Show First */}
-            {categoryData?.summary && (
-              <div className="bg-card p-8 rounded-lg border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
-                  <h2 className="text-2xl font-semibold flex items-center gap-2">
-                    <BookOpen className="w-6 h-6 text-primary" />
-                    Theory
-                  </h2>
-                  {categoryData.fileUrl && (
-                    <a
-                      href={categoryData.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-primary hover:text-primary/80 hover:underline text-sm transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      View in Confluence
-                    </a>
-                  )}
-                </div>
-                <div 
-                  className="confluence-content"
-                  dangerouslySetInnerHTML={{ __html: categoryData.summary }}
-                />
-              </div>
-            )}
+            {/* Theory Section - Show First */}
+                {categoryData?.summary && (
+                  <div className="bg-card p-8 rounded-lg border border-border shadow-sm">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+                      <h2 className="text-2xl font-semibold flex items-center gap-2">
+                        <BookOpen className="w-6 h-6 text-primary" />
+                        Theory
+                      </h2>
+                    </div>
+                    <div 
+                      className="content-html"
+                      dangerouslySetInnerHTML={{ __html: categoryData.summary }}
+                    />
+                  </div>
+                )}
 
           </div>
         </div>

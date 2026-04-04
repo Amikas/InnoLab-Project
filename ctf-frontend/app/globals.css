@@ -122,49 +122,49 @@
   }
 }
 
-/* Styling for Confluence HTML content */
-.confluence-content {
+/* Styling for course content (migrated from external source) */
+.content-html {
   @apply text-foreground;
   line-height: 1.7;
   color: inherit;
 }
 
-.confluence-content p {
+.content-html p {
   @apply mb-4 text-base;
   margin-bottom: 1rem !important;
   display: block;
 }
 
 /* Ensure paragraphs have spacing even when nested */
-.confluence-content > p {
+.content-html > p {
   @apply mb-4;
   margin-bottom: 1rem !important;
 }
 
-.confluence-content h1,
-.confluence-content h2,
-.confluence-content h3,
-.confluence-content h4,
-.confluence-content h5,
-.confluence-content h6 {
+.content-html h1,
+.content-html h2,
+.content-html h3,
+.content-html h4,
+.content-html h5,
+.content-html h6 {
   @apply font-bold mt-6 mb-4 text-foreground;
 }
 
-.confluence-content h1 {
+.content-html h1 {
   @apply text-2xl;
 }
 
-.confluence-content h2 {
+.content-html h2 {
   @apply text-xl;
 }
 
-.confluence-content h3 {
+.content-html h3 {
   @apply text-lg;
 }
 
 /* Base list styling - use !important to override any defaults */
-.confluence-content ul,
-.confluence-content ol {
+.content-html ul,
+.content-html ol {
   @apply mb-4;
   margin-top: 0.5rem !important;
   margin-bottom: 1rem !important;
@@ -173,16 +173,16 @@
   display: block !important;
 }
 
-.confluence-content ul {
+.content-html ul {
   list-style-type: disc !important;
 }
 
-.confluence-content ol {
+.content-html ol {
   list-style-type: decimal !important;
 }
 
 /* List items */
-.confluence-content li {
+.content-html li {
   @apply text-base;
   display: list-item !important;
   margin-bottom: 0.5rem !important;
@@ -192,15 +192,15 @@
 }
 
 /* Nested lists - proper indentation */
-.confluence-content li > ul,
-.confluence-content li > ol {
+.content-html li > ul,
+.content-html li > ol {
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
   padding-left: 2rem !important;
 }
 
 /* Paragraphs inside list items */
-.confluence-content li p {
+.content-html li p {
   display: block !important;
   margin-bottom: 0.5rem !important;
   margin-top: 0 !important;
@@ -208,12 +208,12 @@
 }
 
 /* First paragraph in list item */
-.confluence-content li > p:first-child {
+.content-html li > p:first-child {
   margin-top: 0 !important;
 }
 
 /* Line breaks */
-.confluence-content br {
+.content-html br {
   display: block !important;
   content: "" !important;
   margin-top: 0.5rem !important;
@@ -221,68 +221,68 @@
 }
 
 /* Nested list items */
-.confluence-content li li {
+.content-html li li {
   margin-top: 0.25rem !important;
   margin-bottom: 0.25rem !important;
 }
 
-.confluence-content a {
+.content-html a {
   @apply text-primary hover:underline underline-offset-2 transition-colors;
 }
 
-.confluence-content a.external-link {
+.content-html a.external-link {
   @apply text-primary hover:text-primary/80;
 }
 
-.confluence-content strong,
-.confluence-content b {
+.content-html strong,
+.content-html b {
   font-weight: 700 !important;
   color: inherit !important;
   display: inline;
 }
 
-.confluence-content code {
+.content-html code {
   @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground;
 }
 
-.confluence-content pre {
+.content-html pre {
   @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
 }
 
-.confluence-content pre code {
+.content-html pre code {
   @apply bg-transparent p-0;
 }
 
-.confluence-content blockquote {
+.content-html blockquote {
   @apply border-l-4 border-primary pl-4 italic my-4 text-muted-foreground;
 }
 
-.confluence-content img {
+.content-html img {
   @apply max-w-full h-auto rounded-lg my-4;
 }
 
-.confluence-content table {
+.content-html table {
   @apply w-full border-collapse mb-4;
 }
 
-.confluence-content th,
-.confluence-content td {
+.content-html th,
+.content-html td {
   @apply border border-border px-4 py-2;
 }
 
-.confluence-content th {
+.content-html th {
   @apply bg-muted font-semibold;
 }
 
-.confluence-content hr {
+.content-html hr {
   @apply my-6 border-border;
 }
 
-/* Confluence-specific classes */
-.confluence-content .confluence-embedded-file-wrapper {
+/* Content HTML classes */
+.content-html .confluence-embedded-file-wrapper {
   @apply my-4;
 }
 
-.confluence-content .confluence-embedded-file img {
+.content-html .confluence-embedded-file img {
   @apply max-w-xs;
 }

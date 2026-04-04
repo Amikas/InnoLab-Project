@@ -34,8 +34,6 @@ services:
       - db
       - terminal
     environment:
-      - CONFLUENCE_EMAIL=${CONFLUENCE_EMAIL}
-      - CONFLUENCE_API_TOKEN=${CONFLUENCE_API_TOKEN}
       - JWT_SECRET=${JWT_SECRET}
       - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://inno1-bif3-p1-w25.cs.technikum-wien.at:3000,http://inno1-bif3-p1-w25.cs.technikum-wien.at,https://inno1-bif3-p1-w25.cs.technikum-wien.at}
       - DOCKER_HOST=unix:///var/run/docker.sock

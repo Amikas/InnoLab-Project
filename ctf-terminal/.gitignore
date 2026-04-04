@@ -2,7 +2,6 @@ node_modules/
 dist/
 ctf-terminal/node_modules/
 .env
-.env.Confluence
 git-sim_media
 material
 ctf-frontend-next/node_modules/

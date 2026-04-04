@@ -1,6 +1,5 @@
 ctf-terminal/node_modules/
 .env
-.env.Confluence
 git-sim_media
 material
 ctf-frontend-next/node_modules/
@@ -9,3 +8,4 @@ ctf-frontend-next/node_modules/
 .qwen
 Doc.md
 Refactor.md
+ctf-frontend/tsconfig.tsbuildinfo

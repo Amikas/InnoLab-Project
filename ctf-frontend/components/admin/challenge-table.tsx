@@ -247,6 +247,7 @@ export default function ChallengeTable({ challenges }: ChallengeTableProps) {
       {editingChallenge && (
         <EditChallengeModal
           challenge={editingChallenge}
+          isOpen={!!editingChallenge}
           onClose={() => setEditingChallenge(null)}
           onSave={() => {
             setEditingChallenge(null)
