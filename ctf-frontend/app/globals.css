@@ -135,6 +135,108 @@
   display: block;
 }
 
+/* Lesson content wrapper - handles HTML content without typography plugin */
+.lesson-content-html {
+  @apply text-foreground;
+  line-height: 1.7;
+  color: inherit;
+}
+
+.lesson-content-html > p {
+  @apply mb-4 text-base;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Paragraphs in lesson content */
+.lesson-content-html p {
+  @apply mb-4 text-base;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Headings */
+.lesson-content-html h1,
+.lesson-content-html h2,
+.lesson-content-html h3,
+.lesson-content-html h4,
+.lesson-content-html h5,
+.lesson-content-html h6 {
+  @apply font-bold mt-6 mb-3 text-foreground;
+}
+
+.lesson-content-html h1 { @apply text-2xl; }
+.lesson-content-html h2 { @apply text-xl; }
+.lesson-content-html h3 { @apply text-lg; }
+
+/* Unordered lists (bullet points) */
+.lesson-content-html ul,
+.lesson-content-html ol {
+  @apply mb-4 pl-6;
+  list-style-position: outside;
+  display: block;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-content-html ul {
+  list-style-type: disc;
+}
+
+.lesson-content-html ol {
+  list-style-type: decimal;
+}
+
+/* List items */
+.lesson-content-html li {
+  @apply text-base mb-2;
+  display: list-item;
+  padding-left: 0.5rem;
+}
+
+/* Nested lists */
+.lesson-content-html li > ul,
+.lesson-content-html li > ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+/* Strong/bold text */
+.lesson-content-html strong,
+.lesson-content-html b {
+  font-weight: 700;
+  color: inherit;
+}
+
+/* Inline code */
+.lesson-content-html code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground;
+}
+
+/* Code blocks */
+.lesson-content-html pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.lesson-content-html pre code {
+  @apply bg-transparent p-0;
+}
+
+/* Links */
+.lesson-content-html a {
+  @apply text-primary hover:underline underline-offset-2;
+}
+
+/* Blockquotes */
+.lesson-content-html blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-4 text-muted-foreground;
+}
+
+/* Horizontal rules */
+.lesson-content-html hr {
+  @apply my-6 border-border;
+}
+
 /* Ensure paragraphs have spacing even when nested */
 .content-html > p {
   @apply mb-4;
@@ -285,4 +387,79 @@
 
 .content-html .confluence-embedded-file img {
   @apply max-w-xs;
+}
+
+/* TipTap Editor Content Styling */
+.ProseMirror {
+  @apply text-foreground leading-relaxed;
+  outline: none;
+  min-height: 200px;
+}
+
+.ProseMirror p {
+  @apply mb-3;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  @apply font-bold mt-4 mb-2;
+}
+
+.ProseMirror h1 { @apply text-2xl; }
+.ProseMirror h2 { @apply text-xl; }
+.ProseMirror h3 { @apply text-lg; }
+
+/* Lists in editor */
+.ProseMirror ul,
+.ProseMirror ol {
+  @apply mb-3 pl-6;
+  list-style-position: outside;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror li {
+  @apply mb-1;
+}
+
+/* Nested lists */
+.ProseMirror li ul,
+.ProseMirror li ol {
+  @apply mt-1 mb-1 pl-4;
+}
+
+/* Code blocks */
+.ProseMirror pre {
+  @apply bg-muted p-3 rounded-lg font-mono text-sm my-3;
+  background: oklch(var(--muted));
+}
+
+.ProseMirror code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+  background: oklch(var(--muted));
+}
+
+/* Blockquotes */
+.ProseMirror blockquote {
+  @apply border-l-4 border-primary pl-3 italic my-3 text-muted-foreground;
+}
+
+/* Strong/bold */
+.ProseMirror strong {
+  @apply font-bold;
+}
+
+/* Horizontal rule */
+.ProseMirror hr {
+  @apply my-4 border-border;
 }
