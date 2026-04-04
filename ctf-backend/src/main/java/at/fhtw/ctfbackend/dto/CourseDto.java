@@ -19,5 +19,6 @@ public class CourseDto {
     private String difficulty;
     private Integer estimatedMinutes;
     private Integer orderIndex;
+    private Boolean isPublished;
     private List<ModuleDto> modules;
 }

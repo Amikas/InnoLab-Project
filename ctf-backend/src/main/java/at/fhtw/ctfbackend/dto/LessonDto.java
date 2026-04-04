@@ -13,9 +13,14 @@ import java.util.List;
 @AllArgsConstructor
 public class LessonDto {
     private Long id;
+    private Long moduleId;
     private String title;
     private String content;
+    private String detailedExplanation;
     private String videoUrl;
     private Integer orderIndex;
     private List<String> challengeIds;
+    private List<String> codeExamplesJson;
+    private List<String> realWorldIncidents;
+    private List<String> externalReferences;
 }

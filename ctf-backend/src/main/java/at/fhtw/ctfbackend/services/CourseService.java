@@ -98,9 +98,13 @@ public class CourseService {
                 .id(entity.getId())
                 .title(entity.getTitle())
                 .content(entity.getContent())
+                .detailedExplanation(entity.getDetailedExplanation())
                 .videoUrl(entity.getVideoUrl())
                 .orderIndex(entity.getOrderIndex())
                 .challengeIds(entity.getChallengeIds())
+                .codeExamplesJson(entity.getCodeExamplesJson())
+                .realWorldIncidents(entity.getRealWorldIncidents())
+                .externalReferences(entity.getExternalReferences())
                 .build();
     }
 }

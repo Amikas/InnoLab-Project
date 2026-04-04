@@ -63,3 +63,105 @@ export async function updateChallenge(id: string, data: any): Promise<any> {
 export async function getAllUsers(): Promise<any[]> {
     return apiClient.get('/api/admin/users');
 }
+
+// Course Admin APIs
+export interface CourseAdmin {
+    id: number;
+    title: string;
+    description: string;
+    slug: string;
+    difficulty: string | null;
+    estimatedMinutes: number | null;
+    orderIndex: number;
+    isPublished: boolean;
+}
+
+export interface ModuleAdmin {
+    id: number;
+    courseId: number;
+    title: string;
+    content: string | null;
+    orderIndex: number;
+}
+
+export interface LessonAdmin {
+    id: number;
+    moduleId: number;
+    title: string;
+    content: string;
+    detailedExplanation: string | null;
+    videoUrl: string | null;
+    orderIndex: number;
+    challengeIds: string[];
+    codeExamplesJson: string[];
+    realWorldIncidents: string[];
+    externalReferences: string[];
+}
+
+export async function getAllCoursesAdmin(): Promise<CourseAdmin[]> {
+    return apiClient.get('/api/admin/courses');
+}
+
+export async function getCourseAdmin(id: number): Promise<CourseAdmin> {
+    return apiClient.get(`/api/admin/courses/${id}`);
+}
+
+export async function createCourse(data: Partial<CourseAdmin>): Promise<CourseAdmin> {
+    return apiClient.post('/api/admin/courses', data);
+}
+
+export async function updateCourse(id: number, data: Partial<CourseAdmin>): Promise<CourseAdmin> {
+    return apiClient.put(`/api/admin/courses/${id}`, data);
+}
+
+export async function deleteCourse(id: number): Promise<void> {
+    return apiClient.delete(`/api/admin/courses/${id}`);
+}
+
+export async function publishCourse(id: number, published: boolean): Promise<CourseAdmin> {
+    return apiClient.put(`/api/admin/courses/${id}/publish`, { published });
+}
+
+export async function getAllModulesAdmin(): Promise<ModuleAdmin[]> {
+    return apiClient.get('/api/admin/modules');
+}
+
+export async function getModulesByCourseAdmin(courseId: number): Promise<ModuleAdmin[]> {
+    return apiClient.get(`/api/admin/modules/course/${courseId}`);
+}
+
+export async function createModule(data: Partial<ModuleAdmin>): Promise<ModuleAdmin> {
+    return apiClient.post('/api/admin/modules', data);
+}
+
+export async function updateModule(id: number, data: Partial<ModuleAdmin>): Promise<ModuleAdmin> {
+    return apiClient.put(`/api/admin/modules/${id}`, data);
+}
+
+export async function deleteModule(id: number): Promise<void> {
+    return apiClient.delete(`/api/admin/modules/${id}`);
+}
+
+export async function getAllLessonsAdmin(): Promise<LessonAdmin[]> {
+    return apiClient.get('/api/admin/lessons');
+}
+
+export async function getLessonAdmin(id: number): Promise<LessonAdmin> {
+    return apiClient.get(`/api/admin/lessons/${id}`);
+}
+
+export async function getLessonsByModuleAdmin(moduleId: number): Promise<LessonAdmin[]> {
+    return apiClient.get(`/api/admin/lessons/module/${moduleId}`);
+}
+
+export async function createLesson(data: Partial<LessonAdmin>): Promise<LessonAdmin> {
+    return apiClient.post('/api/admin/lessons', data);
+}
+
+export async function updateLesson(id: number, data: Partial<LessonAdmin>): Promise<LessonAdmin> {
+    return apiClient.put(`/api/admin/lessons/${id}`, data);
+}
+
+export async function deleteLesson(id: number): Promise<void> {
+    return apiClient.delete(`/api/admin/lessons/${id}`);
+}

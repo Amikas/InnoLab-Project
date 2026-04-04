@@ -4,9 +4,13 @@ export interface Lesson {
   id: number
   title: string
   content: string
+  detailedExplanation: string | null
   videoUrl: string | null
   orderIndex: number
   challengeIds: string[]
+  codeExamplesJson: string[]
+  realWorldIncidents: string[]
+  externalReferences: string[]
 }
 
 export interface Module {

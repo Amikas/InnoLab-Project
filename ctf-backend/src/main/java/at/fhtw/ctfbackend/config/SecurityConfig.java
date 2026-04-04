@@ -72,6 +72,7 @@ public class SecurityConfig {
         .requestMatchers(HttpMethod.PUT, "/api/challenges/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.DELETE, "/api/challenges/**").hasRole("ADMIN")
         .requestMatchers(HttpMethod.POST, "/api/categories/create").hasRole("ADMIN")
+        .requestMatchers("/api/admin/**").hasRole("ADMIN")
         .requestMatchers("/api/challenges/**").permitAll()
         .requestMatchers("/api/environment/**").authenticated()
         .requestMatchers("/api/flags/**").authenticated()

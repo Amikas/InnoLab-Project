@@ -30,10 +30,14 @@ public class LessonEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(columnDefinition = "TEXT")
+    private String detailedExplanation;
+
     @Column(length = 500)
     private String videoUrl;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer orderIndex = 0;
 
     @ElementCollection
@@ -41,6 +45,23 @@ public class LessonEntity {
     @Column(name = "challenge_id")
     @Builder.Default
     private List<String> challengeIds = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "lesson_code_examples", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Builder.Default
+    private List<String> codeExamplesJson = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "lesson_incidents", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Column(name = "incident", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<String> realWorldIncidents = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "lesson_references", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Column(name = "reference", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<String> externalReferences = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

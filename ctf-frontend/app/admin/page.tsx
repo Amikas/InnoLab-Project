@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Shield, Users, Flag, TrendingUp } from "lucide-react"
+import { Shield, Users, Flag, TrendingUp, BookOpen } from "lucide-react"
 import { getAdminStats, type AdminStats } from "@/lib/api/admin"
 import { useAuth } from '@/lib/hooks/use-auth'
 import { useRouter } from 'next/navigation'
@@ -122,12 +122,21 @@ export default function AdminDashboardPage() {
               Welcome back, {auth.user}! Manage challenges, users, and platform statistics
             </p>
           </div>
-          <Link
-            href="/admin/challenges"
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-          >
-            Manage Challenges
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/admin/courses"
+              className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium"
+            >
+              <BookOpen className="w-5 h-5" />
+              Manage Courses
+            </Link>
+            <Link
+              href="/admin/challenges"
+              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+            >
+              Manage Challenges
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}

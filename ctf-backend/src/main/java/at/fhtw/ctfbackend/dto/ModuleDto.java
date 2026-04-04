@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ModuleDto {
     private Long id;
+    private Long courseId;
     private String title;
     private String content;
     private Integer orderIndex;

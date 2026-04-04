@@ -35,9 +35,11 @@ public class CourseEntity {
     private Integer estimatedMinutes;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer orderIndex = 0;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isPublished = false;
 
     @Column(updatable = false)

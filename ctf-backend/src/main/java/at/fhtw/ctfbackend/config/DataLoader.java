@@ -192,9 +192,14 @@ public class DataLoader {
         ));
 
         ModuleEntity webMod2 = createModule(webCourse, "Injection Attacks", 1, List.of(
-                createLesson("SQL Injection Fundamentals", "Learn how attackers manipulate database queries.", 0),
-                createLesson("Cross-Site Scripting (XSS)", "Understand and exploit XSS vulnerabilities.", 1),
-                createLesson("Command Injection", "How to inject and execute system commands.", 2)
+                createLesson(
+                    "SQL Injection Fundamentals", 
+                    "<h2>What is SQL Injection?</h2><p>SQL Injection is a vulnerability where an application takes input from a user and doesn't validate that the user's input doesn't contain additional SQL.</p>",
+                    "<h3>Understanding the Vulnerability</h3><p>When user input is directly concatenated into a SQL query without proper sanitization, an attacker can manipulate the query's logic.</p><h3>Example Vulnerability</h3><pre><code>// VULNERABLE CODE\n$username = $_GET['username'];\n$result = mysql_query(\"SELECT * FROM users WHERE username='$username'\");</code></pre><p>If a user enters <code>' OR 1=1--</code>, the query becomes:</p><pre><code>SELECT * FROM users WHERE username='' OR 1=1--</code></pre><p>This returns all users because <code>1=1</code> is always true.</p>",
+                    0
+                ),
+                createLesson("Cross-Site Scripting (XSS)", "<h2>Understanding XSS</h2><p>XSS allows attackers to inject malicious scripts into web pages.</p>", "<h3>Types of XSS</h3><ul><li><strong>Reflected XSS</strong>: Malicious script is part of the request</li><li><strong>Stored XSS</strong>: Malicious script is stored on the server</li><li><strong>DOM-based XSS</strong>: Client-side code modifies the DOM</li></ul>", 1),
+                createLesson("Command Injection", "<h2>Command Injection</h2><p>When applications pass unsafe user input to system shells.</p>", "<h3>Prevention</h3><p>Always use parameterized commands and avoid shell execution with user input.</p>", 2)
         ));
 
         webCourse.setModules(Set.of(webMod1, webMod2));
@@ -299,7 +304,19 @@ public class DataLoader {
         return LessonEntity.builder()
                 .title(title)
                 .content(content)
+                .detailedExplanation("")
                 .orderIndex(orderIndex)
+                .build();
+    }
+
+    private LessonEntity createLesson(String title, String content, String detailedExplanation, int orderIndex) {
+        return LessonEntity.builder()
+                .title(title)
+                .content(content)
+                .detailedExplanation(detailedExplanation)
+                .orderIndex(orderIndex)
+                .realWorldIncidents(List.of())
+                .externalReferences(List.of())
                 .build();
     }
 }

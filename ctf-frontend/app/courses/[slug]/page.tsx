@@ -110,9 +110,10 @@ export default async function CourseDetailPage({ params }: Props) {
               
               <div className="divide-y divide-border">
                 {module.lessons.map((lesson: Lesson, lessonIndex: number) => (
-                  <div
+                  <Link
                     key={lesson.id}
-                    className="px-6 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                    href={`/courses/${slug}/lesson/${lesson.id}`}
+                    className="block px-6 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-medium">
@@ -122,7 +123,7 @@ export default async function CourseDetailPage({ params }: Props) {
                         <h3 className="font-medium">{lesson.title}</h3>
                         {lesson.content && (
                           <p className="text-sm text-muted-foreground line-clamp-1">
-                            {lesson.content}
+                            {lesson.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
                           </p>
                         )}
                       </div>
@@ -140,7 +141,7 @@ export default async function CourseDetailPage({ params }: Props) {
                         Watch
                       </a>
                     )}
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

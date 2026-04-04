@@ -31,6 +31,7 @@ public class ModuleEntity {
     private String content;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer orderIndex = 0;
 
     @Column(updatable = false)
