@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
     }
     // If running on server (SSR), use Docker service name
     if (typeof window === 'undefined') {
-        return process.env.API_URL || 'http://app:8080';
+        return process.env.API_URL || 'http://localhost:8080';
     }
     // In browser, default to same-origin. Next.js rewrite can proxy /api to backend.
     return '';

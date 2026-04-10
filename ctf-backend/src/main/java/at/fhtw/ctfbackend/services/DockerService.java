@@ -63,6 +63,7 @@ public class DockerService {
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
+            pb.redirectError(ProcessBuilder.Redirect.PIPE);
             Process process = pb.start();
 
             // Read and log output in real-time
@@ -82,10 +83,20 @@ public class DockerService {
                 throw new RuntimeException("Docker build timed out after 5 minutes");
             }
 
+            // Also capture stderr
+            StringBuilder stderr = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.err.println("   [stderr] " + line);
+                    stderr.append(line).append("\n");
+                }
+            }
+
             int exitCode = process.exitValue();
 
             if (exitCode != 0) {
-                throw new RuntimeException("Docker build failed with exit code " + exitCode + ":\n" + output);
+                throw new RuntimeException("Docker build failed with exit code " + exitCode + ":\nSTDOUT:\n" + output + "\nSTDERR:\n" + stderr);
             }
 
             System.out.println(" Image built successfully: " + tag);

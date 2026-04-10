@@ -5,9 +5,10 @@ import { ArrowLeft } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useAuth } from '@/lib/hooks/use-auth'
 import { useRouter } from 'next/navigation'
-import { getAllChallenges } from "@/lib/api/challenges" // Use client version
-import ChallengeTable from "@/components/admin/challenge-table"
-import AddChallengeForm from "@/components/admin/add-challenge-form"
+import dynamic from "next/dynamic"
+import { getAllChallenges } from "@/lib/api/challenges"
+const ChallengeTable = dynamic(() => import("@/components/admin/challenge-table"), { ssr: false })
+const AddChallengeForm = dynamic(() => import("@/components/admin/add-challenge-form"), { ssr: false })
 import type { Challenge } from "@/lib/types"
 
 export default function AdminChallengesPage() {
