@@ -68,7 +68,7 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
             }, 100);
 
             const terminalUrl = process.env.NEXT_PUBLIC_TERMINAL_URL || "ws://localhost:3001";
-            const wsUrl = `${terminalUrl}/?instanceId=${instanceId}&containerName=${containerName || `ctf-${instanceId.substring(0, 8)}`}`;
+            const wsUrl = `${terminalUrl}/?instanceId=${instanceId}&containerName=${containerName || `ctf-${instanceId.substring(0, 8)}`}&sshPort=${sshPort}`;
 
             const ws = new WebSocket(wsUrl);
             ws.binaryType = 'arraybuffer';

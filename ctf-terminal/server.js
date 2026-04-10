@@ -101,9 +101,19 @@ async function connectSSHWithRetry(config, maxRetries = 3) {
 
                 conn.once('error', (err) => {
                     clearTimeout(timeout);
+                    console.error(`[${config.instanceId}] SSH Error:`, err.message);
+                    console.error(`[${config.instanceId}] SSH Error Code:`, err.code);
+                    console.error(`[${config.instanceId}] SSH Error Level:`, err.level);
                     reject(err);
                 });
 
+                console.log(`[${config.instanceId}] SSH connect config:`, JSON.stringify({
+                    host: config.host,
+                    port: config.port,
+                    username: config.username,
+                    readyTimeout: config.readyTimeout,
+                    tryKeyboard: config.tryKeyboard
+                }));
                 console.log(`[${config.instanceId}] SSH connection attempt ${attempt}/${maxRetries}`);
                 conn.connect(config);
             });
@@ -111,13 +121,15 @@ async function connectSSHWithRetry(config, maxRetries = 3) {
             return conn; // Success!
             
         } catch (err) {
-            console.log(`[${config.instanceId}] SSH attempt ${attempt}/${maxRetries} failed: ${err.message}`);
+            console.error(`[${config.instanceId}] SSH attempt ${attempt}/${maxRetries} FAILED:`, err.message);
+            console.error(`[${config.instanceId}] Error stack:`, err.stack);
             
             if (attempt === maxRetries) {
                 throw err; // Final attempt failed
             }
             
             // Wait before retry
+            console.log(`[${config.instanceId}] Waiting 2s before retry...`);
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
@@ -128,8 +140,9 @@ wss.on("connection", async (ws, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const containerName = url.searchParams.get("containerName");
     const instanceId = url.searchParams.get("instanceId");
+    const sshPort = url.searchParams.get("sshPort");
 
-    console.log(`[${instanceId}] New connection → Container: ${containerName}`);
+    console.log(`[${instanceId}] New connection → Container: ${containerName}, SSH Port: ${sshPort}`);
 
     // Validate container name
     if (!containerName) {
@@ -138,13 +151,18 @@ wss.on("connection", async (ws, req) => {
         return;
     }
 
-    console.log(`[${instanceId}] Connecting to container via Docker network DNS: ${containerName}`);
+    // Use sshPort if provided (mapped port on host), otherwise use container name with port 22
+    // For containers in ctf-isolated network, connect via localhost with mapped port
+    const sshHost = sshPort ? '127.0.0.1' : containerName;
+    const sshPortNum = sshPort ? parseInt(sshPort, 10) : 22;
+
+    console.log(`[${instanceId}] Connecting to SSH at ${sshHost}:${sshPortNum}`);
 
     // Send status update to client
     ws.send(`\r\n\x1b[1;36m Waiting for SSH service to start...\x1b[0m\r\n`);
     
-    // Wait for SSH to be ready - USE CONTAINER NAME directly
-    const sshReady = await waitForSSH(containerName, 22);
+    // Wait for SSH to be ready
+    const sshReady = await waitForSSH(sshHost, sshPortNum);
     
     if (!sshReady) {
         ws.send(`\r\n\x1b[1;31m SSH service failed to start\x1b[0m\r\n`);
@@ -156,14 +174,14 @@ wss.on("connection", async (ws, req) => {
     ws.send(`\r\n\x1b[1;32m SSH service is ready!\x1b[0m\r\n`);
     ws.send(`\x1b[1;36m Establishing secure connection...\x1b[0m\r\n`);
 
-    // SSH connection with retry - USE CONTAINER NAME directly
+    // SSH connection with retry - use sshHost and sshPortNum
     let conn;
     let shell = null;
 
     try {
         conn = await connectSSHWithRetry({
-            host: containerName,  //  USE CONTAINER NAME instead of IP
-            port: 22,
+            host: sshHost,
+            port: sshPortNum,
             username: 'ctfuser',
             password: 'ctfpassword',
             readyTimeout: 10000,

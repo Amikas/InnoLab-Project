@@ -30,7 +30,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtUtil jwtUtil,
-            @Value("${app.cors.allowed-origins:http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002}") String allowedOriginsRaw
+            @Value("${app.cors.allowed-origins=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://inno1-bif3-p1-w25.cs.technikum-wien.at:3000}") String allowedOriginsRaw
     ) {
         this.jwtUtil = jwtUtil;
         this.allowedOrigins = Arrays.stream(allowedOriginsRaw.split(","))
@@ -55,6 +55,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
         // Public (no token needed) - MUST be first and exact match
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+        .requestMatchers("/error").permitAll()
         .requestMatchers("/api/login").permitAll()
         .requestMatchers("/api/csrf-token").permitAll()
         .requestMatchers("/api/auth/**").permitAll()
