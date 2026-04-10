@@ -11,12 +11,12 @@ import java.time.Instant;
 public class EnvironmentCleanupService {
 
     private final ChallengeInstanceRepository instanceRepo;
-    private final DockerService dockerService;
+    private final EnvironmentService envService;
 
     public EnvironmentCleanupService(ChallengeInstanceRepository instanceRepo,
-                                     DockerService dockerService) {
+                                     EnvironmentService envService) {
         this.instanceRepo = instanceRepo;
-        this.dockerService = dockerService;
+        this.envService = envService;
     }
 
     // Run every minute
@@ -26,15 +26,9 @@ public class EnvironmentCleanupService {
 
         var all = instanceRepo.findAll();
         for (ChallengeInstanceEntity inst : all) {
-            if (inst.getStatus().equals("RUNNING") &&
-                    inst.getExpiresAt().isBefore(now)) {
-
+            if ("RUNNING".equals(inst.getStatus()) && inst.getExpiresAt().isBefore(now)) {
                 System.out.println("Cleaning expired instance: " + inst.getInstanceId());
-
-                dockerService.stopContainer(inst.getContainerName());
-
-                inst.setStatus("EXPIRED");
-                instanceRepo.save(inst);
+                envService.cleanupAndReleasePort(inst.getInstanceId());
             }
         }
     }

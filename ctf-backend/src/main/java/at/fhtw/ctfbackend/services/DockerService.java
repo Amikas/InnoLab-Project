@@ -34,6 +34,12 @@ public class DockerService {
         validateChallengeId(challengeId);
         validateImageTag(tag);
 
+        // Remove existing image to prevent accumulation
+        if (imageExists(tag)) {
+            System.out.println("Removing existing image before rebuild: " + tag);
+            removeImage(tag);
+        }
+
         // Determine challenge directory path and Dockerfile location
         String buildContextDir = getBuildContextDir(challengeId);
         String dockerfilePath = getDockerfilePath(challengeId);
@@ -240,6 +246,17 @@ public class DockerService {
         System.out.println(" Container: " + containerName);
         System.out.println(" Ports: SSH=" + sshPort);
         System.out.println(" Flag: " + (flag != null ? flag.substring(0, Math.min(flag.length(), 20)) : "null"));
+
+        // Check for existing container with same name (race condition with cleanup)
+        if (containerExists(containerName)) {
+            System.err.println("WARNING: Container " + containerName + " already exists, removing before run");
+            try {
+                stopContainer(containerName);
+            } catch (Exception e) {
+                System.err.println("Graceful stop failed, killing: " + containerName);
+                killContainer(containerName);
+            }
+        }
 
         try {
             // Build command

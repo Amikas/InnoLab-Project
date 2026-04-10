@@ -70,11 +70,19 @@ public class EnvironmentController {
     // 3) Optional: Stop environment
     @PostMapping("/stop/{instanceId}")
     public ResponseEntity<?> stopInstance(@PathVariable String instanceId) {
-        boolean stopped = envService.stopEnvironment(instanceId);
+        EnvironmentService.StopResult result = envService.stopEnvironment(instanceId);
 
-        return ResponseEntity.ok(Map.of(
-                "stopped", stopped
-        ));
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("instanceFound", result.instanceFound());
+        response.put("dockerStopped", result.dockerStopped());
+        response.put("portReleased", result.portReleased());
+        response.put("success", result.dockerStopped() && result.portReleased());
+
+        if (result.errorMessage() != null) {
+            response.put("error", result.errorMessage());
+        }
+
+        return ResponseEntity.ok(response);
     }
     // 4) Build and start challenge environment
     @PostMapping("/build/{challengeId}")

@@ -1,5 +1,5 @@
 const nextConfig = {
-  output: 'standalone',
+  output: 'standalone',  // Keep this from your branch
   trailingSlash: true,
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
