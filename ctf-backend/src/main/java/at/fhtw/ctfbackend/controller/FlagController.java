@@ -1,6 +1,8 @@
 package at.fhtw.ctfbackend.controller;
 
 import at.fhtw.ctfbackend.dto.SubmitFlagRequestDto;
+import at.fhtw.ctfbackend.repository.ChallengeInstanceRepository;
+import at.fhtw.ctfbackend.services.EnvironmentService;
 import at.fhtw.ctfbackend.services.FlagService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +16,14 @@ import java.util.Map;
 public class FlagController {
 
     private final FlagService flagService;
+    private final EnvironmentService envService;
+    private final ChallengeInstanceRepository instanceRepo;
 
-    public FlagController(FlagService flagService) {
+    public FlagController(FlagService flagService, EnvironmentService envService,
+                          ChallengeInstanceRepository instanceRepo) {
         this.flagService = flagService;
+        this.envService = envService;
+        this.instanceRepo = instanceRepo;
     }
 
     @PostMapping("/submit")
@@ -65,6 +72,20 @@ public class FlagController {
                             "message", "Failed to record solve.",
                             "status",  "error"
                     ));
+        }
+
+        // Auto-cleanup dynamic challenge container after successful solve
+        try {
+            var instances = instanceRepo.findByUsernameAndChallengeIdAndStatus(
+                    username, challengeId, "RUNNING"
+            );
+            if (!instances.isEmpty()) {
+                String instanceId = instances.get(0).getInstanceId();
+                envService.cleanupAndReleasePort(instanceId);
+                System.out.println("Auto-cleaned environment after solve: " + instanceId);
+            }
+        } catch (Exception cleanupEx) {
+            System.err.println("WARNING: Failed to auto-cleanup environment after solve: " + cleanupEx.getMessage());
         }
 
         //  Get the updated solve count AFTER the transaction commits
