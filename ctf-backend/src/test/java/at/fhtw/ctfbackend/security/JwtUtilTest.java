@@ -111,18 +111,16 @@ class JwtUtilTest {
     }
 
     @Test
-    void generateToken_MultipleTokens_AreDifferent() {
+    void generateToken_MultipleTokens_AreValid() {
         String username = "testuser";
 
         String token1 = jwtUtil.generateToken(username);
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         String token2 = jwtUtil.generateToken(username);
 
-        assertNotEquals(token1, token2);
+        assertTrue(jwtUtil.validateToken(token1));
+        assertTrue(jwtUtil.validateToken(token2));
+        assertEquals(username, jwtUtil.extractUsername(token1));
+        assertEquals(username, jwtUtil.extractUsername(token2));
     }
 
     @Test

@@ -23,7 +23,11 @@ export function extractHeadingsFromHtml(html: string): TocHeading[] {
   while ((match = headingRegex.exec(html)) !== null) {
     const level = parseInt(match[1])
     const text = match[2].replace(/<[^>]+>/g, '').trim() // Strip any inner HTML
-    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const id = text
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
 
     headings.push({ id, text, level })
   }

@@ -37,4 +37,9 @@ public class GlobalMockConfig {
     public JwtUtil jwtUtil() {
         return Mockito.mock(JwtUtil.class);
     }
+
+    @Bean
+    public RateLimitConfig rateLimitConfig() {
+        return Mockito.mock(RateLimitConfig.class);
+    }
 }

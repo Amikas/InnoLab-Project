@@ -21,6 +21,7 @@
 | 10 | [Admin Guide](10-admin-guide.md) | Challenge CRUD, course management, user administration |
 | 11 | [Development Guide](11-development-guide.md) | Local setup, coding standards, adding challenges, testing |
 | 12 | [Course Editor Guide](12-course-editor-guide.md) | Creating educational course lessons with code examples |
+| 13 | [SonarQube](13-sonarqube.md) | Coverage reports and Docker-based SonarScanner workflow |
 
 ---
 

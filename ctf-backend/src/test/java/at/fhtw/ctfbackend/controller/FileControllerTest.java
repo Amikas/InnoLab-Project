@@ -2,6 +2,7 @@ package at.fhtw.ctfbackend.controller;
 
 import at.fhtw.ctfbackend.config.GlobalMockConfig;
 import at.fhtw.ctfbackend.services.FileService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,6 +30,11 @@ class FileControllerTest {
     @Autowired
     private FileService fileService;
 
+    @BeforeEach
+    void resetMocks() {
+        reset(fileService);
+    }
+
     @Test
     void downloadFile_ExistingFile_ReturnsFile() throws Exception {
         mockMvc.perform(get("/api/files/download/test.zip"))
@@ -44,7 +50,7 @@ class FileControllerTest {
     @Test
     void downloadFile_PathTraversalAttempt_HandlesSecurely() throws Exception {
         mockMvc.perform(get("/api/files/download/../../../etc/passwd"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -60,11 +60,15 @@ public class FileService {
             // Parse the JSON body
             JsonNode jsonNode = objectMapper.readTree(body);
 
-            if (!jsonNode.has("filename")) {
+            if (!jsonNode.has("filename") || jsonNode.get("filename").isNull()) {
                 return "Missing 'filename' field";
             }
 
             String filename = jsonNode.get("filename").asText();
+            if (filename.isBlank()) {
+                return "Missing 'filename' field";
+            }
+
             String id = filename.replace(".zip", "");
 
             // Check if the file already exists in the DB

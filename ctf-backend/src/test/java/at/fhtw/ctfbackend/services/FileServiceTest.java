@@ -62,11 +62,11 @@ class FileServiceTest {
     void customUpload_ValidJson_WithFilename_ReturnsSuccess() {
         String json = "{\"filename\": \"new-file.zip\"}";
         when(fileRepo.existsById("new-file")).thenReturn(false);
-        when(fileRepo.save(any(FileEntity.class))).thenReturn(fileEntity);
 
         String result = service.customUpload(json);
 
         assertTrue(result.contains("Error") || result.contains("File not found"));
+        verify(fileRepo, never()).save(any());
     }
 
     @Test

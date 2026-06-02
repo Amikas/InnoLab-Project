@@ -44,6 +44,10 @@ public class JwtUtil {
 
     // Generate JWT with username and admin role
     public String generateToken(String username, boolean isAdmin) {
+        if (username == null) {
+            throw new IllegalArgumentException("username must not be null");
+        }
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("isAdmin", isAdmin);
         return createToken(claims, username);
@@ -104,6 +108,10 @@ public class JwtUtil {
 
     // Validate token (structure, signature, and expiration)
     public boolean validateToken(String token) {
+        if (token == null || !token.equals(token.trim())) {
+            return false;
+        }
+
         try {
             Jws<Claims> claims = parseToken(token);
             return !isTokenExpired(token);
