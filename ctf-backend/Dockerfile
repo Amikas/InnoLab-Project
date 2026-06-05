@@ -3,10 +3,12 @@ FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline -B
 
 COPY src /app/src
-RUN mvn clean package -DskipTests=true -Dcheckstyle.skip=true
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests=true -Dcheckstyle.skip=true
 
 # Stage 2: Runtime with Docker
 FROM eclipse-temurin:21-jre
@@ -21,7 +23,9 @@ RUN apt-get update && apt-get install -y \
 
 # Copy built JAR
 COPY --from=builder /app/target/ctfbackend-*.jar app.jar
-COPY src/main/resources/files /app/files
+
+# Copy files from builder stage (not build context) for layer correctness
+COPY --from=builder /app/src/main/resources/files /app/files
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

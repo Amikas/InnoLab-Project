@@ -6,7 +6,8 @@ RUN apk add --no-cache docker-cli
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN --mount=type=cache,target=/app/.npm \
+    npm ci --only=production --prefer-offline --cache /app/.npm
 
 COPY server.js ./
 
