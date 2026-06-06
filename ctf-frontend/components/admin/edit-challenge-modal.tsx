@@ -233,19 +233,21 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="flag"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Flag</FormLabel>
-                    <FormControl>
-                      <Input placeholder="FLAG{example_flag}" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!requiresInstance && (
+                <FormField
+                  control={form.control}
+                  name="flag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Flag</FormLabel>
+                      <FormControl>
+                        <Input placeholder="FLAG{example_flag}" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             {/* File Upload */}

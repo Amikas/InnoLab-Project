@@ -160,7 +160,7 @@ export default function AddChallengeForm() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const onSubmit = async (data: ChallengeFormValues) => {
+  const handleCreateChallenge = async (data: ChallengeFormValues) => {
     setIsLoading(true);
     setShowSuccessAlert(false);
 
@@ -293,7 +293,7 @@ export default function AddChallengeForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <p className="text-sm font-medium">
@@ -627,6 +627,7 @@ export default function AddChallengeForm() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && newHint.trim()) {
                             e.preventDefault();
+                            e.stopPropagation();
                             setHints([...hints, newHint.trim()]);
                             setNewHint("");
                           }
@@ -824,7 +825,11 @@ export default function AddChallengeForm() {
                     Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={isLoading}>
+                  <Button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={form.handleSubmit(handleCreateChallenge)}
+                  >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
