@@ -59,46 +59,68 @@ public class DockerService {
             command.add(dockerfilePath);
             command.add(buildContextDir);
 
+            logger.debug("=== DOCKER BUILD DEBUG ===");
+            logger.debug("Command: {}", String.join(" ", command));
             logger.debug("Build context: {}", buildContextDir);
             logger.debug("Dockerfile: {}", dockerfilePath);
             logger.debug("Image tag: {}", tag);
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
-            pb.redirectError(ProcessBuilder.Redirect.PIPE);
             Process process = pb.start();
 
-            // Read and log output in real-time
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    logger.debug("   {}", line);
-                    output.append(line).append("\n");
-                }
-            }
+            logger.debug("Process started, PID: {}", process.pid());
 
+            // Read output in a daemon thread so waitFor() is not blocked
+            // by zombie subprocesses keeping the pipe open.
+            StringBuffer output = new StringBuffer();
+            Thread readerThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        logger.debug("   {}", line);
+                        output.append(line).append("\n");
+                    }
+                    logger.debug("=== DOCKER BUILD DEBUG: readLine() returned null (EOF) ===");
+                } catch (IOException e) {
+                    // Expected: stream closed after waitFor to unblock reader
+                    logger.debug("=== DOCKER BUILD DEBUG: readLine() threw IOException (stream closed) ===");
+                }
+            });
+            readerThread.setDaemon(true);
+            readerThread.start();
+
+            logger.debug("=== DOCKER BUILD DEBUG: waiting for process (timeout=5min) ===");
             boolean completed = process.waitFor(5, TimeUnit.MINUTES);
+            logger.debug("=== DOCKER BUILD DEBUG: waitFor() returned, completed={} ===", completed);
 
             if (!completed) {
-                process.destroy();
+                process.destroy(); // SIGTERM
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+                if (process.isAlive()) {
+                    process.destroyForcibly(); // SIGKILL if still alive
+                }
+                readerThread.interrupt();
                 throw new RuntimeException("Docker build timed out after 5 minutes");
             }
 
-            // Also capture stderr
-            StringBuilder stderr = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    logger.warn("   [stderr] {}", line);
-                    stderr.append(line).append("\n");
-                }
-            }
+            // Close the input stream to force the reader thread to unblock
+            logger.debug("=== DOCKER BUILD DEBUG: closing input stream ===");
+            process.getInputStream().close();
+
+            // Give reader thread a moment to finish
+            readerThread.join(1000);
 
             int exitCode = process.exitValue();
+            logger.debug("=== DOCKER BUILD DEBUG: exitCode={} ===", exitCode);
 
             if (exitCode != 0) {
-                throw new RuntimeException("Docker build failed with exit code " + exitCode + ":\nSTDOUT:\n" + output + "\nSTDERR:\n" + stderr);
+                throw new RuntimeException("Docker build failed with exit code " + exitCode
+                        + "\n--- build output (stdout + stderr merged) ---\n" + output);
             }
 
             logger.info(" Image built successfully: {}", tag);
@@ -145,30 +167,20 @@ public class DockerService {
     }
 
     /**
-     * Get the correct build context directory (parent of docker folder)
+     * Get the correct build context directory (parent of docker folder).
+     * Recreates the folder structure if it's missing (survives volume wipe).
      */
     private String getBuildContextDir(String challengeId) {
-        String challengePath = challengesBasePath + "/" + challengeId;
-        Path challengeDir = Paths.get(challengePath);
-
-        if (!Files.exists(challengeDir)) {
-            throw new IllegalArgumentException("Challenge directory not found: " + challengePath);
-        }
-
-        // Build context should be the challenge directory itself (parent of docker folder)
+        Path challengeDir = ensureChallengeDirectory(challengeId);
         return challengeDir.toAbsolutePath().toString();
     }
 
     /**
-     * Get the correct Dockerfile path
+     * Get the correct Dockerfile path.
+     * Recreates the folder structure if it's missing (survives volume wipe).
      */
     private String getDockerfilePath(String challengeId) {
-        String challengePath = challengesBasePath + "/" + challengeId;
-        Path challengeDir = Paths.get(challengePath);
-
-        if (!Files.exists(challengeDir)) {
-            throw new IllegalArgumentException("Challenge directory not found: " + challengePath);
-        }
+        Path challengeDir = ensureChallengeDirectory(challengeId);
 
         // Check multiple possible locations for Dockerfile
         List<Path> possiblePaths = Arrays.asList(
@@ -185,60 +197,31 @@ public class DockerService {
             }
         }
 
-        // If no Dockerfile found, create a minimal one in docker/ folder
-        return createMinimalDockerfile(challengeId);
+        // No Dockerfile found — fail clearly instead of generating one
+        throw new RuntimeException("No Dockerfile found for challenge: " + challengeId
+                + ". Checked: docker/Dockerfile, docker/dockerfile, Dockerfile, dockerfile"
+                + " at " + challengeDir);
     }
 
     /**
-     * Create a minimal Dockerfile if none exists
+     * Ensure the challenge directory exists on disk.
+     * If missing, recreates the full structure (docker/ + files/)
+     * via ChallengeFileStorageService. This makes the system resilient
+     * to Docker volume wipes between restarts.
      */
-    private String createMinimalDockerfile(String challengeId) throws RuntimeException {
-        try {
-            String challengePath = challengesBasePath + "/" + challengeId;
-            Path dockerDir = Paths.get(challengePath, "docker");
-            Files.createDirectories(dockerDir);
+    private Path ensureChallengeDirectory(String challengeId) {
+        String challengePath = challengesBasePath + "/" + challengeId;
+        Path challengeDir = Paths.get(challengePath);
 
-            Path dockerfilePath = dockerDir.resolve("Dockerfile");
-
-            String minimalDockerfile = """
-                FROM alpine:latest
-                
-                RUN apk update && apk add --no-cache \\
-                    bash \\
-                    openssh-server \\
-                    sudo
-                
-                # Create ctfuser
-                RUN adduser -D ctfuser && \\
-                    echo "ctfuser:ctfuser" | chpasswd && \\
-                    echo "ctfuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-                
-                # Setup SSH
-                RUN mkdir -p /run/openrc && \\
-                    touch /run/openrc/softlevel && \\
-                    ssh-keygen -A
-                
-                # Create challenge directory
-                RUN mkdir -p /challenge && chown -R ctfuser:ctfuser /challenge
-                
-                # Copy files if they exist
-                COPY . /challenge/
-                
-                WORKDIR /home/ctfuser
-                USER ctfuser
-                
-                # Start SSH
-                CMD ["/usr/sbin/sshd", "-D"]
-                """;
-
-            Files.writeString(dockerfilePath, minimalDockerfile);
-            logger.info(" Created minimal Dockerfile at: {}", dockerfilePath);
-
-            return dockerfilePath.toAbsolutePath().toString();
-
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create Dockerfile for challenge: " + challengeId, e);
+        if (!Files.exists(challengeDir)) {
+            logger.warn("Challenge directory missing, recreating: {}", challengePath);
+            try {
+                fileStorageService.createChallengeFolder(challengeId);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to recreate challenge directory: " + challengePath, e);
+            }
         }
+        return challengeDir;
     }
 
     /**

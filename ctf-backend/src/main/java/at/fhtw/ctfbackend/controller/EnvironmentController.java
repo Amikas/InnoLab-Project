@@ -3,6 +3,8 @@ package at.fhtw.ctfbackend.controller;
 import at.fhtw.ctfbackend.dto.ChallengeInstanceResponse;
 import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
 import at.fhtw.ctfbackend.services.EnvironmentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/environment")
 public class EnvironmentController {
+
+    private static final Logger logger = LoggerFactory.getLogger(EnvironmentController.class);
 
     private final EnvironmentService envService;
 
@@ -110,10 +114,9 @@ public class EnvironmentController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of(
-                    "error", "Failed to build and start challenge",
-                    "details", e.getMessage()
-            ));
+            logger.error("Build failed for challenge {} by user {}: {}", challengeId, username,
+                    e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to build and start challenge"));
         }
     }
 }

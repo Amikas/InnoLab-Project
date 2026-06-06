@@ -236,6 +236,7 @@ public class EnvironmentService {
             return inst;
 
         } catch (Exception e) {
+            logger.error("Failed to build and start challenge {} for user {}: {}", challengeId, username, e.getMessage(), e);
             try {
                 instanceRepo.delete(inst);
             } catch (Exception dbEx) {

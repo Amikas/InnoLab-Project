@@ -1,5 +1,7 @@
 package at.fhtw.ctfbackend.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,29 +18,28 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleAuthenticationException(RuntimeException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", ex.getMessage());
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleUnhandled(Exception ex) {
+        logger.error("Unhandled exception: {}", ex.getMessage(), ex);
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Internal server error");
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        logger.warn("Bad request: {}", ex.getMessage());
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        response.put("error", "Bad request");
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", "Invalid username or password");
+        response.put("error", "Invalid username or password");
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
@@ -46,8 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", "Access denied");
+        response.put("error", "Access denied");
 
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
@@ -55,27 +55,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(NoHandlerFoundException ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", "Resource not found");
+        response.put("error", "Resource not found");
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(AdminStateConflictException.class)
+    // Messages from this exception are intentionally user-facing — keep them sanitized at throw sites
     public ResponseEntity<Map<String, String>> handleAdminStateConflict(
         AdminStateConflictException ex
     ) {
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", ex.getMessage());
+        response.put("error", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler({DisabledException.class, LockedException.class})
     public ResponseEntity<Map<String, String>> handleAccountIssues(Exception ex) {
         Map<String, String> response = new HashMap<>();
-        response.put("status", "error");
-        response.put("message", ex instanceof DisabledException ?
+        response.put("error", ex instanceof DisabledException ?
                 "Account is disabled" : "Account is locked");
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);

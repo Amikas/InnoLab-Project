@@ -9,6 +9,10 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// When running inside Docker, connect via container name on port 22.
+// When running natively on host, connect via 127.0.0.1:<mapped-port>.
+const USE_DOCKER_DNS = process.env.USE_DOCKER_DNS === 'true';
+
 // Basic CORS
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -153,8 +157,8 @@ wss.on("connection", async (ws, req) => {
 
     // Use sshPort if provided (mapped port on host), otherwise use container name with port 22
     // For containers in ctf-isolated network, connect via localhost with mapped port
-    const sshHost = sshPort ? '127.0.0.1' : containerName;
-    const sshPortNum = sshPort ? parseInt(sshPort, 10) : 22;
+    const sshHost = USE_DOCKER_DNS ? containerName : '127.0.0.1';
+    const sshPortNum = USE_DOCKER_DNS ? 22 : (sshPort ? parseInt(sshPort, 10) : 22);
 
     console.log(`[${instanceId}] Connecting to SSH at ${sshHost}:${sshPortNum}`);
 
