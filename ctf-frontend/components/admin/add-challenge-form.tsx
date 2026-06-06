@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -87,6 +87,8 @@ export default function AddChallengeForm() {
   const [hints, setHints] = useState<string[]>([]);
   const [newHint, setNewHint] = useState("");
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounter = useRef(0);
   const { toast } = useToast();
 
   const form = useForm<ChallengeFormValues>({
@@ -104,6 +106,37 @@ export default function AddChallengeForm() {
 
   const requiresInstance = form.watch("requiresInstance");
   const formValues = form.watch();
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    dragCounter.current = 0;
+    handleDockerFileChange(e.dataTransfer.files);
+  };
 
   const handleDockerFileChange = (files: FileList | null) => {
     if (!files) return;
@@ -293,7 +326,12 @@ export default function AddChallengeForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              onDragOver={(e) => e.preventDefault()}
+              onDragEnter={(e) => e.preventDefault()}
+              className="space-y-6"
+            >
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <p className="text-sm font-medium">
@@ -528,14 +566,25 @@ export default function AddChallengeForm() {
                         </FormDescription>
                       </div>
 
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 hover:border-primary/50 transition-colors">
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-lg p-6 transition-colors",
+                          isDragOver
+                            ? "border-primary bg-primary/5"
+                            : "border-muted-foreground/25 hover:border-primary/50",
+                        )}
+                        onDragOver={handleDragOver}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
                         <div className="flex flex-col items-center justify-center space-y-4">
                           <Upload className="h-8 w-8 text-muted-foreground" />
                           <div className="text-center">
                             <p className="text-sm font-medium">
                               Drag & drop files here, or click to browse
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">  
                               Accepted: Dockerfile, .sh, .c, .cpp, .py, .js,
                               .txt, .md
                             </p>
