@@ -74,8 +74,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleLdapInfrastructure(LdapInfrastructureException ex) {
         logger.error("LDAP infrastructure error [{}]: {}", ex.getErrorCode(), ex.getMessage());
 
+        String userMessage = switch (ex.getErrorCode()) {
+            case DNS_FAILURE, CONNECTION_TIMEOUT, READ_TIMEOUT, SERVER_UNREACHABLE, TLS_ERROR ->
+                "LDAP server unreachable, make sure you are connected to the VPN or on the FH server";
+            case CONFIG_ERROR ->
+                "Authentication service is misconfigured, please contact an administrator";
+            case UNKNOWN_INFRASTRUCTURE_ERROR ->
+                "Authentication service temporarily unavailable";
+        };
+
         Map<String, String> response = new HashMap<>();
-        response.put("error", ex.getMessage());
+        response.put("error", userMessage);
         response.put("errorCode", ex.getErrorCode().name());
 
         HttpStatus status = switch (ex.getErrorCode()) {
