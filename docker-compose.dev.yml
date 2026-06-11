@@ -1,0 +1,23 @@
+networks:
+  ctf-isolated:
+    driver: bridge
+    external: true
+    name: ctf-isolated
+
+services:
+  db:
+    image: postgres:16
+    container_name: ctf_db_dev
+    environment:
+      POSTGRES_USER: ctfuser
+      POSTGRES_PASSWORD: ctfpass
+      POSTGRES_DB: ctf
+    ports:
+      - "5432:5432"
+    networks:
+      - ctf-isolated
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata_dev:
