@@ -41,7 +41,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { createChallenge } from "@/lib/api/admin";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +89,6 @@ export default function AddChallengeForm() {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounter = useRef(0);
-  const { toast } = useToast();
 
   const form = useForm<ChallengeFormValues>({
     resolver: zodResolver(challengeFormSchema),
@@ -185,7 +184,15 @@ export default function AddChallengeForm() {
         "difficulty",
         "points",
       ]);
-      if (valid) setCurrentStep(3);
+      if (valid && isDockerValid) {
+        setCurrentStep(3)
+      } else if (!isDockerValid) {
+        toast.error("Missing critical file", {
+          description: "Cannot proceed to the next step unless a Dockerfile is provided",
+          duration: 3000,
+          className: "border-destructive",
+        })
+      };
     }
   };
 
@@ -213,15 +220,19 @@ export default function AddChallengeForm() {
         data.requiresInstance ? "true" : "false",
       );
       if (data.requiresInstance) {
-        dockerFiles.forEach((file) => formData.append("dockerFiles", file));
+        if (hasDockerfile) {
+          dockerFiles.forEach((file) => formData.append("dockerFiles", file));
+        } else {
+          throw new Error("A Dockerfile is required for dynamic challenges.");
+
+        }
       }
 
       hints.forEach((hint) => formData.append("hints", hint));
 
       await createChallenge(formData);
 
-      toast({
-        title: "Challenge Created Successfully!",
+      toast.success("Challenge Created Successfully!", {
         description: `"${data.title}" has been added to the platform and is now available to players.`,
         duration: 5000,
       });
@@ -243,20 +254,22 @@ export default function AddChallengeForm() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Challenge creation error:", error);
-      toast({
-        title: "Error Creating Challenge",
+      toast.error("Error Creating Challenge", {
         description:
           error instanceof Error
             ? error.message
             : "An unexpected error occurred. Please try again.",
-        variant: "destructive",
         duration: 7000,
       });
     } finally {
       setIsLoading(false);
     }
   };
-
+  const hasDockerfile = dockerFiles.some(
+    (file) => file.name === "Dockerfile" || file.name.toLowerCase().endsWith(".dockerfile")
+  );
+  // Evaluates to true if it's a static challenge, OR if it has a Dockerfile.
+  const isDockerValid = !requiresInstance || hasDockerfile;
   const steps = [
     { num: 1, label: "Type" },
     { num: 2, label: "Configure" },
@@ -584,7 +597,7 @@ export default function AddChallengeForm() {
                             <p className="text-sm font-medium">
                               Drag & drop files here, or click to browse
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">  
+                            <p className="text-xs text-muted-foreground mt-1">
                               Accepted: Dockerfile, .sh, .c, .cpp, .py, .js,
                               .txt, .md
                             </p>
@@ -759,11 +772,11 @@ export default function AddChallengeForm() {
                         variant="outline"
                         className={cn(
                           formValues.difficulty === "easy" &&
-                            "border-green-300 text-green-700 bg-green-50",
+                          "border-green-300 text-green-700 bg-green-50",
                           formValues.difficulty === "medium" &&
-                            "border-yellow-300 text-yellow-700 bg-yellow-50",
+                          "border-yellow-300 text-yellow-700 bg-yellow-50",
                           formValues.difficulty === "hard" &&
-                            "border-red-300 text-red-700 bg-red-50",
+                          "border-red-300 text-red-700 bg-red-50",
                         )}
                       >
                         {formValues.difficulty?.charAt(0).toUpperCase() +

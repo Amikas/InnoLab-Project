@@ -5,7 +5,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import "xterm/css/xterm.css";
 import { X, Copy, Clipboard } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 interface KaliTerminalProps {
     instanceId?: string;
     sshPort?: number;
@@ -20,14 +20,17 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
     const isInitializedRef = useRef(false);
     const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected" | "error" | "missing_props">("connecting");
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-    const { toast } = useToast();
+
 
     const handleCopy = useCallback(() => {
         const termEl = terminalInstanceRef.current;
         if (!termEl) return;
         const selection = termEl.getSelection();
         if (!selection) {
-            toast({ title: "Nothing to copy", description: "Select text in the terminal first", duration: 2000 });
+            toast("Nothing to copy", {
+                description: "Select text in the terminal first",
+                duration: 2000,
+            });
             setContextMenu(null);
             return;
         }
@@ -47,19 +50,28 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
             } else {
                 copyToClipboard(selection);
             }
-            toast({ title: "Copied", description: "Text copied to clipboard", duration: 2000 });
+            toast.success("Copied", {
+                description: "Text copied to clipboard",
+                duration: 2000,
+            });
         } catch {
-            toast({ title: "Copy failed", description: "Unable to write to clipboard", variant: "destructive", duration: 3000 });
+            toast.error("Copy failed", {
+                description: "Unable to write to clipboard",
+                duration: 3000,
+            });
         }
         setContextMenu(null);
-    }, [toast]);
+    }, []);
 
     const sendText = useCallback((text: string) => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(text);
-            toast({ title: "Pasted", description: "Text sent to terminal", duration: 2000 });
+            toast.success("Pasted", {
+                description: "Text sent to terminal",
+                duration: 2000,
+            });
         }
-    }, [toast]);
+    }, []);
 
     const handlePaste = useCallback(async () => {
         let pasted = false;
@@ -86,17 +98,15 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
             setTimeout(() => {
                 if (document.body.contains(input)) document.body.removeChild(input);
                 if (!pasted) {
-                    toast({
-                        title: "Paste blocked",
+                    toast.error("Paste blocked", {
                         description: "Grant clipboard permission in site settings or use Ctrl+Shift+V",
-                        variant: "destructive",
                         duration: 4000,
                     });
                 }
             }, 200);
         }
         setContextMenu(null);
-    }, [sendText, toast]);
+    }, [sendText]);
     useEffect(() => {
         if (!sshPort || !instanceId || !terminalRef.current || isInitializedRef.current) {
             if (!sshPort || !instanceId) {

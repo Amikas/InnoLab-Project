@@ -5,7 +5,8 @@ import "./globals.css"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/lib/hooks/use-auth"  // ← ADD THIS IMPORT
+import { AuthProvider } from "@/lib/hooks/use-auth"
+import { Toaster } from "@/components/ui/sonner"
 
 // Font configuration
 const inter = Inter({
@@ -33,11 +34,12 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen flex flex-col font-sans">
         <ThemeProvider attribute="class" defaultTheme="system">
-          <AuthProvider>  {/* ← WRAP WITH AUTH PROVIDER */}
+          <AuthProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

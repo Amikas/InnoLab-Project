@@ -148,6 +148,27 @@
   margin-bottom: 1rem;
 }
 
+@layer components {
+  .toaster [data-sonner-toast][data-type="error"] {
+    border-color: var(--error-border);
+    background-color: var(--error-bg);
+    color: var(--error-text);
+  }
+
+  .toaster [data-sonner-toast][data-type="error"] [data-icon],
+  .toaster [data-sonner-toast][data-type="error"] [data-title],
+  .toaster [data-sonner-toast][data-type="error"] [data-description],
+  .toaster [data-sonner-toast][data-type="error"] [data-close-button] {
+    color: var(--error-text);
+  }
+
+  .toaster [data-sonner-toast][data-type="error"] svg {
+    color: var(--error-text);
+    fill: currentColor;
+    stroke: currentColor;
+  }
+}
+
 /* Paragraphs in lesson content */
 .lesson-content-html p {
   @apply mb-4 text-base;

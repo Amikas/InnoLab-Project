@@ -36,7 +36,7 @@ import {
 import type { Challenge } from "@/lib/types"
 import EditChallengeModal from "./edit-challenge-modal"
 import { deleteChallenge } from "@/lib/api/challenges"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 interface ChallengeTableProps {
   challenges: Challenge[]
@@ -46,7 +46,6 @@ export default function ChallengeTable({ challenges }: ChallengeTableProps) {
   const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Challenge | null>(null)
   const [isDeleteLoading, setIsDeleteLoading] = useState(false)
-  const { toast } = useToast()
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -54,18 +53,15 @@ export default function ChallengeTable({ challenges }: ChallengeTableProps) {
     setIsDeleteLoading(true)
     try {
       await deleteChallenge(deleteTarget.id)
-      toast({
-        title: "Challenge Deleted",
+      toast.success("Challenge Deleted", {
         description: `"${deleteTarget.title}" has been removed.`,
         duration: 3000,
       })
       setDeleteTarget(null)
       setTimeout(() => window.location.reload(), 1500)
     } catch (error) {
-      toast({
-        title: "Error Deleting Challenge",
+      toast.error("Error Deleting Challenge", {
         description: error instanceof Error ? error.message : "Failed to delete challenge.",
-        variant: "destructive",
         duration: 4000,
       })
     } finally {
@@ -228,8 +224,7 @@ export default function ChallengeTable({ challenges }: ChallengeTableProps) {
           onClose={() => setEditingChallenge(null)}
           onSave={() => {
             setEditingChallenge(null)
-            toast({
-              title: "Challenge Updated",
+            toast.success("Challenge Updated", {
               description: "Your changes have been saved successfully.",
               duration: 3000,
             })

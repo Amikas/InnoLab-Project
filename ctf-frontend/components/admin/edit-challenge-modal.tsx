@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Terminal, Monitor, Code, Server, X } from "lucide-react"
 import type { Challenge } from "@/lib/types"
 import { updateChallenge } from "@/lib/api/challenges"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 // Form validation schema
 const challengeFormSchema = z.object({
@@ -48,7 +48,6 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
   const [isLoading, setIsLoading] = useState(false)
   const [hints, setHints] = useState<string[]>(challenge?.hints || [])
   const [newHint, setNewHint] = useState("")
-  const { toast } = useToast()
 
   const form = useForm<ChallengeFormValues>({
     resolver: zodResolver(challengeFormSchema),
@@ -104,17 +103,14 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
         hints: hints.length > 0 ? hints : undefined,
       })
 
-      toast({
-        title: "Challenge updated!",
+      toast.success("Challenge updated!", {
         description: "The challenge has been successfully updated.",
       })
 
       onSave()
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to update challenge",
-        variant: "destructive",
       })
     } finally {
       setIsLoading(false)
