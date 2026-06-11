@@ -101,20 +101,16 @@ public class JwtUtil {
                 .getBody();
     }
 
-    // Check if token is expired
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
 
     // Validate token (structure, signature, and expiration)
     public boolean validateToken(String token) {
         if (token == null || !token.equals(token.trim())) {
             return false;
         }
-
+    
         try {
-            Jws<Claims> claims = parseToken(token);
-            return !isTokenExpired(token);
+            Claims claims = parseToken(token).getBody();
+            return claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
