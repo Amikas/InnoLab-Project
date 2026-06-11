@@ -499,10 +499,4 @@ public class DockerService {
         }
     }
 
-    private void validatePort(int port) {
-        if (port < 1024 || port > 65535) {
-            throw new IllegalArgumentException("Port must be between 1024 and 65535: " + port);
-        }
-    }
-
 }
