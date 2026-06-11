@@ -70,6 +70,22 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(LdapInfrastructureException.class)
+    public ResponseEntity<Map<String, String>> handleLdapInfrastructure(LdapInfrastructureException ex) {
+        logger.error("LDAP infrastructure error [{}]: {}", ex.getErrorCode(), ex.getMessage());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("error", ex.getMessage());
+        response.put("errorCode", ex.getErrorCode().name());
+
+        HttpStatus status = switch (ex.getErrorCode()) {
+            case CONFIG_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+            default -> HttpStatus.SERVICE_UNAVAILABLE;
+        };
+
+        return new ResponseEntity<>(response, status);
+    }
+
     @ExceptionHandler({DisabledException.class, LockedException.class})
     public ResponseEntity<Map<String, String>> handleAccountIssues(Exception ex) {
         Map<String, String> response = new HashMap<>();

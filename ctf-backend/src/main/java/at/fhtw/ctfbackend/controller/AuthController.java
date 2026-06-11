@@ -41,25 +41,14 @@ public class AuthController {
         String username = credentials.getUsername();
         String password = credentials.getPassword();
 
-        try {
-            boolean authenticated = ldapAuthenticationService.authenticate(
-                username,
-                password
-            );
-            if (!authenticated) {
-                responseBody.put("status", "error");
-                responseBody.put("message", "Invalid username or password");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    responseBody
-                );
-            }
-        } catch (IllegalStateException ex) {
+        boolean authenticated = ldapAuthenticationService.authenticate(
+            username,
+            password
+        );
+        if (!authenticated) {
             responseBody.put("status", "error");
-            responseBody.put(
-                "message",
-                "Authentication service temporarily unavailable"
-            );
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+            responseBody.put("message", "Invalid username or password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 responseBody
             );
         }

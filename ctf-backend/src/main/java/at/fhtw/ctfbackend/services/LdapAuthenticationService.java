@@ -5,9 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import at.fhtw.ctfbackend.controller.LdapErrorCode;
+import at.fhtw.ctfbackend.controller.LdapInfrastructureException;
 import javax.naming.AuthenticationException;
+import javax.naming.CommunicationException;
+import javax.naming.ConfigurationException;
 import javax.naming.Context;
 import javax.naming.NamingException;
+import javax.naming.NoInitialContextException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.util.Hashtable;
@@ -54,9 +59,34 @@ public class LdapAuthenticationService {
             return true;
         } catch (AuthenticationException ex) {
             return false;
+        } catch (CommunicationException ex) {
+            Throwable rootCause = ex.getRootCause() != null ? ex.getRootCause() : ex;
+            String causeMessage = rootCause.getMessage() != null ? rootCause.getMessage().toLowerCase() : "";
+            String exceptionName = rootCause.getClass().getSimpleName();
+
+            LdapErrorCode errorCode;
+            if (exceptionName.equals("UnknownHostException")) {
+                errorCode = LdapErrorCode.DNS_FAILURE;
+            } else if (exceptionName.equals("SocketTimeoutException")) {
+                errorCode = causeMessage.contains("read")
+                    ? LdapErrorCode.READ_TIMEOUT
+                    : LdapErrorCode.CONNECTION_TIMEOUT;
+            } else if (exceptionName.equals("ConnectException") || causeMessage.contains("connection refused")) {
+                errorCode = LdapErrorCode.SERVER_UNREACHABLE;
+            } else if (exceptionName.contains("SSL") || exceptionName.contains("Cert") || causeMessage.contains("handshake")) {
+                errorCode = LdapErrorCode.TLS_ERROR;
+            } else {
+                errorCode = LdapErrorCode.UNKNOWN_INFRASTRUCTURE_ERROR;
+            }
+
+            logger.error("LDAP communication error [{}] for userId={}: {}", errorCode, userId, exceptionName, ex);
+            throw new LdapInfrastructureException(errorCode, "LDAP infrastructure failure: " + exceptionName);
+        } catch (ConfigurationException | NoInitialContextException ex) {
+            logger.error("LDAP configuration error for userId={}", userId, ex);
+            throw new LdapInfrastructureException(LdapErrorCode.CONFIG_ERROR, "LDAP configuration error", ex);
         } catch (NamingException ex) {
-            logger.error("LDAP bind failed due to server/connection issue for userId={}", userId, ex);
-            throw new IllegalStateException("LDAP server unavailable", ex);
+            logger.error("LDAP unexpected error for userId={}", userId, ex);
+            throw new LdapInfrastructureException(LdapErrorCode.UNKNOWN_INFRASTRUCTURE_ERROR, "LDAP unexpected error", ex);
         } finally {
             if (context != null) {
                 try {
