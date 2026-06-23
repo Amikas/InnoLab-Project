@@ -230,11 +230,13 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
                 handleCopy();
                 return false;
             }
-            if (event.ctrlKey && event.shiftKey && event.code === 'KeyV') {
+        };
+        const handlePasteEvent = (event: ClipboardEvent) => {
+            const text = event.clipboardData?.getData('text/plain') || '';
+            if (text) {
                 event.preventDefault();
                 event.stopPropagation();
-                handlePaste();
-                return false;
+                sendText(text);
             }
         };
         const handleContextMenu = (event: MouseEvent) => {
@@ -243,16 +245,18 @@ export default function KaliTerminal({ instanceId, sshPort, containerName, onClo
         };
         const handleClickOutside = () => setContextMenu(null);
         domEl.addEventListener('keydown', handleKeyDown, true);
+        domEl.addEventListener('paste', handlePasteEvent, true);
         domEl.addEventListener('contextmenu', handleContextMenu);
         document.addEventListener('click', handleClickOutside);
         document.addEventListener('scroll', handleClickOutside, true);
         return () => {
             domEl.removeEventListener('keydown', handleKeyDown, true);
+            domEl.removeEventListener('paste', handlePasteEvent, true);
             domEl.removeEventListener('contextmenu', handleContextMenu);
             document.removeEventListener('click', handleClickOutside);
             document.removeEventListener('scroll', handleClickOutside, true);
         };
-    }, [handleCopy, handlePaste]);
+    }, [handleCopy, sendText]);
     const getStatusColor = () => {
         switch (connectionStatus) {
             case "connected": return "text-green-500";
