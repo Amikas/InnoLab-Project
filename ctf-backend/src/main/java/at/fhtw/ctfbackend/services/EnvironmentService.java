@@ -127,20 +127,27 @@ public class EnvironmentService {
         }
     }
 
-    public ChallengeInstanceEntity getInstance(String instanceId) {
-        return instanceRepo.findByInstanceId(instanceId).orElse(null);
+    public ChallengeInstanceEntity getInstance(String username, String instanceId) {
+        return instanceRepo.findByInstanceId(instanceId)
+                .filter(inst -> username.equals(inst.getUsername()))
+                .orElse(null);
     }
 
-    public record StopResult(boolean instanceFound, boolean dockerStopped, 
+    public record StopResult(boolean accessible, boolean dockerStopped, 
                              boolean portReleased, String errorMessage) {}
 
-    public StopResult stopEnvironment(String instanceId) {
+    public StopResult stopEnvironment(String username, String instanceId) {
         var instOpt = instanceRepo.findByInstanceId(instanceId);
         if (instOpt.isEmpty()) {
             return new StopResult(false, false, false, "Instance not found: " + instanceId);
         }
 
         var inst = instOpt.get();
+
+        if (!username.equals(inst.getUsername())) {
+            return new StopResult(false, false, false, "Instance not found: " + instanceId);
+        }
+
         boolean dockerStopped = false;
         boolean portReleased = false;
 

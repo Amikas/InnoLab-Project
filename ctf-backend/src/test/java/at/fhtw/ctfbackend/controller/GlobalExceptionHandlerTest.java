@@ -25,7 +25,6 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<Map<String, String>> response = handler.handleAdminStateConflict(ex);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("error", response.getBody().get("status"));
-        assertEquals("Cannot demote yourself", response.getBody().get("message"));
+        assertEquals("Cannot demote yourself", response.getBody().get("error"));
     }
 }

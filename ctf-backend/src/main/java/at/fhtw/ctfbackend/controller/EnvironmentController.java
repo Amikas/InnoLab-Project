@@ -50,8 +50,8 @@ public class EnvironmentController {
 
     // 2) Optional: Get instance status
     @GetMapping("/instance/{instanceId}")
-    public ResponseEntity<?> getInstance(@PathVariable String instanceId) {
-        var inst = envService.getInstance(instanceId);
+    public ResponseEntity<?> getInstance(Authentication auth, @PathVariable String instanceId) {
+        var inst = envService.getInstance(auth.getName(), instanceId);
         if (inst == null) {
             return ResponseEntity.notFound().build();
         }
@@ -73,11 +73,15 @@ public class EnvironmentController {
 
     // 3) Optional: Stop environment
     @PostMapping("/stop/{instanceId}")
-    public ResponseEntity<?> stopInstance(@PathVariable String instanceId) {
-        EnvironmentService.StopResult result = envService.stopEnvironment(instanceId);
+    public ResponseEntity<?> stopInstance(Authentication auth, @PathVariable String instanceId) {
+        EnvironmentService.StopResult result = envService.stopEnvironment(auth.getName(), instanceId);
+
+        if (!result.accessible()) {
+            return ResponseEntity.notFound().build();
+        }
 
         Map<String, Object> response = new java.util.HashMap<>();
-        response.put("instanceFound", result.instanceFound());
+        response.put("accessible", result.accessible());
         response.put("dockerStopped", result.dockerStopped());
         response.put("portReleased", result.portReleased());
         response.put("success", result.dockerStopped() && result.portReleased());
