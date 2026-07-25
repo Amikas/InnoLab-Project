@@ -61,51 +61,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12">Challenge Categories</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CategoryCard
-              title="Binary Exploitation"
-              description="Master buffer overflows, ROP chains, and memory corruption"
-              href="/binary-exploitation"
-              color="bg-red-500"
-            />
-            <CategoryCard
-              title="Cryptography"
-              description="Break ciphers, analyze encryption, and crack codes"
-              href="/cryptography"
-              color="bg-blue-500"
-            />
-            <CategoryCard
-              title="Forensics"
-              description="Investigate digital evidence and recover hidden data"
-              href="/forensics"
-              color="bg-green-600"
-            />
-            <CategoryCard
-              title="Reverse Engineering"
-              description="Analyze binaries, understand malware, and decompile code"
-              href="/reverse-engineering"
-              color="bg-purple-600"
-            />
-            <CategoryCard
-              title="Web Exploitation"
-              description="Find and exploit vulnerabilities in web applications"
-              href="/web-exploitation"
-              color="bg-yellow-500"
-            />
-            <CategoryCard
-              title="All Challenges"
-              description="Browse all available challenges across categories"
-              href="/challenges"
-              color="bg-primary"
-            />
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -135,19 +90,3 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   )
 }
 
-function CategoryCard({
-  title,
-  description,
-  href,
-  color,
-}: { title: string; description: string; href: string; color: string }) {
-  return (
-    <Link href={href} className="group">
-      <div className="p-6 bg-card rounded-lg border border-border hover:border-primary transition-all hover:scale-105">
-        <div className={`w-full h-2 rounded-full ${color} mb-4`} />
-        <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">{title}</h3>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
-    </Link>
-  )
-}
