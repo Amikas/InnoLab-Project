@@ -1,8 +1,7 @@
 networks:
-  ctf-isolated:
+  ctf-network:
     driver: bridge
-    external: true
-    name: ctf-isolated
+    name: ctf-network
 
 services:
   db:
@@ -15,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - ctf-isolated
+      - ctf-network
     volumes:
       - pgdata_dev:/var/lib/postgresql/data
 

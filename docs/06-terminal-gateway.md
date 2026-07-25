@@ -91,4 +91,4 @@ The gateway resolves containers via:
 - If `sshPort` is provided: connects to `127.0.0.1:<sshPort>` (mapped host port)
 - If `sshPort` is omitted: connects to `<containerName>:22` (Docker network DNS)
 
-For containers on the `ctf-isolated` network, the gateway can resolve container names via the embedded Docker DNS resolver.
+For containers on the `ctf-network` network, the gateway can resolve container names via the embedded Docker DNS resolver.

@@ -156,7 +156,7 @@ wss.on("connection", async (ws, req) => {
     }
 
     // Use sshPort if provided (mapped port on host), otherwise use container name with port 22
-    // For containers in ctf-isolated network, connect via localhost with mapped port
+    // For containers in ctf-network, connect via localhost with mapped port
     const sshHost = USE_DOCKER_DNS ? containerName : '127.0.0.1';
     const sshPortNum = USE_DOCKER_DNS ? 22 : (sshPort ? parseInt(sshPort, 10) : 22);
 

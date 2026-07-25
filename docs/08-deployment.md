@@ -5,9 +5,6 @@
 ## Docker Compose (Local Development)
 
 ```bash
-# Create required network
-docker network create ctf-isolated
-
 # Build and start all services
 docker compose build
 docker compose up -d
@@ -23,7 +20,7 @@ docker compose up -d
 | `terminal` | ctf-terminal | 3001 | WebSocket terminal gateway |
 
 ### Networks
-- Name: `ctf-isolated` (bridge, external: true)
+- Name: `ctf-network` (bridge, created automatically by Compose)
 
 ### Volumes
 - `pgdata` — PostgreSQL data

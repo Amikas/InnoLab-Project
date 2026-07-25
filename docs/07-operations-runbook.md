@@ -301,7 +301,7 @@ The backend performs this sequence:
 - Builds or reuses an image named approximately:
   - `ctf-<challengeId>`
 - Starts a container using:
-  - `--network ctf-isolated`
+  - `--network ctf-network`
   - `-e FLAG=<generated flag>`
   - `-p <allocatedSSHPort>:22`
   - `--memory=512m`
@@ -760,7 +760,7 @@ Check in this order:
 5. Confirm Docker network:
 
    ```bash
-   docker network inspect ctf-isolated
+   docker network inspect ctf-network
    ```
 
 ### 11.2 Environment starts but terminal does not connect

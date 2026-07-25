@@ -249,7 +249,7 @@ public class DockerService {
             List<String> command = new ArrayList<>(Arrays.asList(
                     "docker", "run", "-d",
                     "--name", containerName,
-                    "--network", "ctf-isolated",
+                    "--network", "ctf-network",
                     "-e", "FLAG=" + flag,
                     "-p", sshPort + ":22"
             ));

@@ -58,7 +58,6 @@ A Capture-the-Flag (CTF) training platform for **FH Technikum Wien** students. U
 git clone <repo-url>
 cd InnoLab-Project
 
-docker network create ctf-isolated
 docker compose up -d
 ```
 

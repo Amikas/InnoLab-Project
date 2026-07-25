@@ -58,16 +58,9 @@ npm run dev
 
 Frontend starts on `http://localhost:3000`.
 
-### 6. Create Docker network (for challenge containers)
-
-```bash
-docker network create ctf-isolated
-```
-
 ## Local Setup (Docker)
 
 ```bash
-docker network create ctf-isolated
 docker compose build
 docker compose up -d
 ```

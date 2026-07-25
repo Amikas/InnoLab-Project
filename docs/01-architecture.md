@@ -44,7 +44,7 @@ graph TB
         Nginx --> FE
         Nginx --> TG
         BE --> DockerEngine
-        TG -->|SSH| ChallengeContainers[Challenge Containers<br/>ctf-isolated network]
+        TG -->|SSH| ChallengeContainers[Challenge Containers<br/>ctf-network]
         DockerEngine --> ChallengeContainers
     end
     
@@ -59,7 +59,7 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "Docker Network (ctf-isolated)"
+    subgraph "Docker Network (ctf-network)"
         Frontend[ctf-frontend<br/>:3000]
         Backend[ctf-backend<br/>:8080]
         Terminal[ctf-terminal<br/>:3001]

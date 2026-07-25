@@ -1,8 +1,7 @@
 networks:
-  ctf-isolated:
+  ctf-network:
     driver: bridge
-    external: true
-    name: ctf-isolated
+    name: ctf-network
 services:
   terminal:
     container_name: terminal
@@ -12,7 +11,7 @@ services:
     ports:
       - "3001:3001"
     networks:
-      - ctf-isolated
+      - ctf-network
     environment:
       - PORT=3001
       - USE_DOCKER_DNS=true
@@ -30,7 +29,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - ctf-isolated
+      - ctf-network
     depends_on:
       - db
       - terminal
@@ -56,7 +55,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - ctf-isolated
+      - ctf-network
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -69,7 +68,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - ctf-isolated
+      - ctf-network
     environment:
       - API_URL=${API_URL:-http://app:8080}
       - API_PROXY_TARGET=${API_PROXY_TARGET:-http://app:8080}
