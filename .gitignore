@@ -14,9 +14,12 @@ challenges/
 .opencode/
 .agents/
 Agents.md
-AGENTS.md
 .playwright-mcp/
 .serena/
 skills-lock.json
 graphify-out/
 ctf-challenges
+AGENTS.md
+repomix-output.xml
+repomix.config.json
+
