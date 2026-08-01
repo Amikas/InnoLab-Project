@@ -1,6 +1,7 @@
 'use server'
 
 import { apiClient } from '@/lib/api/client'
+import { logger } from '@/lib/logger'
 import type { LoginCredentials, ApiResult } from '@/lib/types'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -34,7 +35,11 @@ export async function logoutUser(): Promise<void> {
   try {
     await apiClient.post('/api/logout')
   } catch (error) {
-    console.error('Logout error:', error)
+    // Use the project logger; it redacts known sensitive keys in
+    // production and is captured by Next.js server-side observability.
+    logger.warn('Logout failed', {
+      reason: error instanceof Error ? error.name : 'unknown',
+    })
   }
 }
 

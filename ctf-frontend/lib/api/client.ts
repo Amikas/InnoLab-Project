@@ -77,8 +77,12 @@ export class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const serverMsg: string | undefined = errorData.error || errorData.message;
+      if ([400, 401, 403, 404, 409, 429, 503].includes(response.status)) {
+        throw new Error(serverMsg || "Authentication required");
+      }
       throw new Error(
-        errorData.error || errorData.message || `HTTP error! status: ${response.status}`,
+        `Request failed (${response.status})`,
       );
     }
 
