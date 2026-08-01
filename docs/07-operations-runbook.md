@@ -112,6 +112,10 @@ WorkingDirectory=/opt/ctf/backend
 ExecStart=/usr/bin/java -jar app.jar
 Environment="DOCKER_HOST=unix:///var/run/docker.sock"
 Environment="TERMINAL_GATEWAY_URL=http://localhost:3001"
+# logback writes ./logs/ctf-backend.log; ExecStartPre ('+' = root, not User=ctf)
+# creates the dir with ctf:ctf ownership on every start, any systemd version
+ExecStartPre=+/bin/mkdir -p /opt/ctf/backend/logs
+ExecStartPre=+/bin/chown ctf:ctf /opt/ctf/backend/logs
 Restart=always
 ```
 
@@ -830,6 +834,34 @@ curl -sS -w '\nHTTP %{http_code}\n' http://localhost:3001/health   # expect {"st
 > **Do not** run `npm install <module>` manually to "patch" the gateway — it
 > diverges from the lockfile and re-creates the drift that caused the crash.
 
+**Variant — deploy fails at `npm ci` with `EACCES` (root-owned `node_modules`).**
+If anyone ever ran `sudo npm ci` manually in `/opt/ctf/terminal`, `node_modules`
+becomes root-owned. The next deploy's `npm ci` runs as the runner (`student`)
+without sudo and dies with `EACCES: permission denied, unlink
+.../node_modules/.bin/...` during the reinstall. Repair once, then re-run the
+failed job (no code change needed — the workflow file is already committed):
+
+```bash
+sudo chown -R student:student /opt/ctf/terminal
+```
+
+After that, every deploy's `npm ci` runs as `student` on `student`-owned files,
+so the ownership stays correct permanently.
+
+> **Why `ls -l /opt/ctf/terminal` can look fine but still fail:** that listing
+> only shows the top level. The `node_modules` directory itself may show
+> `student:student` while files *one level deeper* (e.g. `node_modules/.bin/*`
+> created by the earlier `sudo npm ci`) are root-owned — and `npm ci` needs to
+> unlink those, which requires write permission on the parent `.bin` directory.
+> To see the real ownership state:
+>
+> ```bash
+> sudo find /opt/ctf/terminal -not -user student -ls | head
+> ```
+>
+> Empty output means ownership is fully fixed; any hits are the exact files that
+> will break the next `npm ci`.
+
 ### 11.4 GitHub Actions frontend deploy fails with permission denied
 
 Check:
@@ -1028,6 +1060,7 @@ frontend WebSocket build URL: ws://.../terminal
 | 2026-05-25 | Reran failed frontend deployment after partial `.next` deletion | Missing standalone server restored; frontend operational |
 | 2026-08-01 | Reinstalled terminal `node_modules` from the committed lockfile after `MODULE_NOT_FOUND: dotenv` crash loop | `curl http://localhost:3001/health` returned `HTTP 200` |
 | 2026-08-01 | Deploy workflow now ships terminal `package.json`/`package-lock.json` and runs `npm ci --omit=dev` on the host | Health check step passes with `Terminal: OK` |
+| 2026-08-01 | Backend crash-looped with `Logback configuration error` — `./logs/ctf-backend.log` parent dir missing and `ctf` cannot create it under `student`-owned `/opt/ctf/backend` (755) | Documented fix: one-time `sudo mkdir -p /opt/ctf/backend/logs && sudo chown ctf:ctf /opt/ctf/backend/logs`, plus `ExecStartPre=+/bin/mkdir -p` + `+/bin/chown ctf:ctf` on the unit (the `+` runs as root; `LogsDirectory=` with an absolute path is ignored on systemd < 246). Pending host verification with `curl http://localhost:8080/api/health` |
 
 ---
 

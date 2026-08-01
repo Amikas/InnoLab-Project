@@ -1,4 +1,4 @@
-package at.fhtw.ctfbackend.config;
+package at.fhtw.ctfbackend.bootstrap;
 
 import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
 import at.fhtw.ctfbackend.entity.HintReveal;

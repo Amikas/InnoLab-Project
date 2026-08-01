@@ -12,12 +12,14 @@
 ```
 at.fhtw.ctfbackend/
 ├── CtfbackendApplication.java          # @SpringBootApplication entry point
+├── bootstrap/
+│   ├── CategorySeeder.java             # Seeds default categories on startup
+│   ├── UserDataBackfill.java           # Backfills user data on startup
+│   └── (planned: ChallengeSeeder, CourseSeeder)
 ├── config/
-│   ├── DataLoader.java                 # Seeds categories + challenges on startup
 │   ├── SecurityConfig.java             # Spring Security: CORS, JWT filter, role auth
 │   ├── WebConfig.java                  # MVC CORS configuration
-│   ├── RateLimitConfig.java            # Bucket4j rate limit configuration
-│   └── UserDataBackfill.java           # Backfills user data on startup
+│   └── RateLimitConfig.java            # Bucket4j rate limit configuration
 ├── controller/                         # REST controllers (15 files)
 ├── dto/                                # Data Transfer Objects
 ├── entity/                             # JPA entities (11 files)

@@ -150,14 +150,64 @@ Triggered on push/PR to `main`/`master`/`dev`.
 [Service]
 Type=simple
 User=ctf
+Group=ctf
 WorkingDirectory=/opt/ctf/backend
 ExecStart=/usr/bin/java -jar app.jar
 Environment="DOCKER_HOST=unix:///var/run/docker.sock"
 Environment="TERMINAL_GATEWAY_URL=http://localhost:3001"
 # REQUIRED (no default in application.properties) — shared with ctf-terminal:
 EnvironmentFile=/opt/ctf/ctf.env
+# logback writes ./logs/ctf-backend.log (from the WorkingDirectory); the dir
+# must exist and be owned by the service user or Spring Boot aborts at startup.
+# ExecStartPre (note the '+' = run as root, NOT as User=ctf) guarantees the dir
+# exists with ctf:ctf ownership on every start, on any systemd version.
+ExecStartPre=+/bin/mkdir -p /opt/ctf/backend/logs
+ExecStartPre=+/bin/chown ctf:ctf /opt/ctf/backend/logs
 Restart=always
 ```
+
+> **`logs/` directory is a hard startup dependency.** The appender resolves
+> `logging.file.name=./logs/ctf-backend.log` against `WorkingDirectory`, and
+> logback refuses to run when it cannot create the parent directory. `ctf`
+> cannot `mkdir` under `/opt/ctf/backend` (owned `student:student`, mode 755),
+> so the unit **must** create it before start — use `ExecStartPre` with the `+`
+> prefix (runs as root, not `User=ctf`); `LogsDirectory=` with an absolute path
+> is silently ignored on systemd < 246 (see the durable fix below). One-time
+> manual repair:
+>
+> ```bash
+> sudo mkdir -p /opt/ctf/backend/logs
+> sudo chown ctf:ctf /opt/ctf/backend/logs
+> sudo systemctl reset-failed ctf-backend
+> sudo systemctl restart ctf-backend
+> ```
+>
+> **Durable fix — create it on every startup.** One-time `mkdir` works until the
+> tree is replaced or wiped. Use `ExecStartPre` with the `+` prefix (runs as
+> root, NOT as the unit's `User=ctf`, so it can `mkdir` under the
+> `student`-owned tree). **Replace the `[Service]` block contents — remove any
+> stale `LogsDirectory=` line from earlier attempts:**
+>
+> ```bash
+> sudo systemctl edit ctf-backend
+> #   [Service]
+> #   ExecStartPre=+/bin/mkdir -p /opt/ctf/backend/logs
+> #   ExecStartPre=+/bin/chown ctf:ctf /opt/ctf/backend/logs
+> sudo systemctl daemon-reload
+> sudo systemctl reset-failed ctf-backend
+> sudo systemctl restart ctf-backend
+> ```
+>
+> > **`LogsDirectory=` is NOT reliable here.** It only supports absolute paths on
+> > systemd ≥ 246 (e.g. Ubuntu ≥ 20.10, Debian ≥ 11). On older systemd the
+> > directive is silently ignored — the unit still starts and then crashes in
+> > logback exactly as observed. Prefer `ExecStartPre` above; it works on every
+> > systemd. (If `systemd --version` on the host reports ≥ 246, `LogsDirectory=`
+> > also works.)
+>
+> Verify: `curl -sf http://localhost:8080/api/health` after ~20–30s (Spring Boot
+> startup) should return `OK`; `ls -ld /opt/ctf/backend/logs` should show
+> `ctf:ctf`.
 
 ### ctf-frontend
 ```ini
