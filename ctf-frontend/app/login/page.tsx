@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import LoginForm from "@/components/login-form"
+import RedirectIfAuthenticated from "@/components/redirect-if-authenticated"
 
 export const metadata: Metadata = {
   title: "Login | CTF Platform",
@@ -8,14 +9,16 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-muted-foreground">Login to continue your CTF journey</p>
+    <RedirectIfAuthenticated>
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
+            <p className="text-muted-foreground">Login to continue your CTF journey</p>
+          </div>
+          <LoginForm />
         </div>
-        <LoginForm />
       </div>
-    </div>
+    </RedirectIfAuthenticated>
   )
 }
