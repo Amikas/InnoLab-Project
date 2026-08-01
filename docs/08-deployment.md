@@ -61,7 +61,7 @@ env:
 2. **Build Frontend** — `npm ci && npm run build` (with `NEXT_PUBLIC_*` vars)
 3. **Deploy Backend** — Copy JAR to `/opt/ctf/backend/app.jar`
 4. **Deploy Frontend** — Remove `/opt/ctf/frontend/.next`, copy new `.next`, copy static assets
-5. **Deploy Terminal** — Copy `server.js` to `/opt/ctf/terminal/server.js`
+5. **Deploy Terminal** — Copy `server.js`, `package.json`, and `package-lock.json` to `/opt/ctf/terminal/`, then run `npm ci --omit=dev` on the host (this wipes and reinstalls `node_modules` to exactly match the committed lockfile). The native deploy used to copy only `server.js`, leaving the host's `node_modules` hand-provisioned and stale — a new `require()` in `server.js` then crash-looped the service with `MODULE_NOT_FOUND` (see runbook incident).
 6. **Verify `CTF_SSH_PASSWORD`** — Aborts unless both units load `EnvironmentFile=/opt/ctf/ctf.env` and that file contains a non-empty `CTF_SSH_PASSWORD` (both services fail to boot without it). Note: `systemctl show -p Environment` does **not** surface `EnvironmentFile=` variables — the guard checks the `EnvironmentFiles` property plus the file contents directly.
 7. **Restart Services** — `systemctl restart ctf-backend ctf-frontend ctf-terminal`
 8. **Health Check** — Retry up to 30s: `localhost:3000`, `localhost:3001/health`, `localhost:8080/api/health`
@@ -135,7 +135,10 @@ Triggered on push/PR to `main`/`master`/`dev`.
 │       └── standalone/
 │           └── server.js
 └── terminal/
-    └── server.js             # Node.js terminal gateway
+    ├── server.js              # Node.js terminal gateway
+    ├── package.json           # manifest (copied on every deploy)
+    ├── package-lock.json      # pinned deps (copied on every deploy)
+    └── node_modules/          # reinstalled via `npm ci --omit=dev` on each deploy
 ```
 
 ---

@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN --mount=type=cache,target=/app/.npm \
-    npm ci --only=production --prefer-offline --cache /app/.npm
+    npm ci --omit=dev --prefer-offline --cache /app/.npm
 
 COPY server.js ./
 

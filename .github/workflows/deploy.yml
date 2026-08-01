@@ -54,7 +54,17 @@ jobs:
           cp -r ctf-frontend/.next/static ${{ env.DEPLOY_DIR }}/frontend/.next/standalone/.next/static
 
       - name: Deploy Terminal
-        run: cp ctf-terminal/server.js ${{ env.DEPLOY_DIR }}/terminal/server.js
+        run: |
+          cp ctf-terminal/server.js ctf-terminal/package.json ctf-terminal/package-lock.json ${{ env.DEPLOY_DIR }}/terminal/
+          cd ${{ env.DEPLOY_DIR }}/terminal
+          # Install exactly what the committed lockfile pins (npm ci wipes and
+          # reinstalls node_modules). The host's node_modules used to be
+          # hand-provisioned and silently drifted from package.json, which crash-
+          # looped the gateway with MODULE_NOT_FOUND (e.g. 'dotenv') after new
+          # requires() were added. Failing fast here is cheaper than a health-
+          # check timeout after the restart.
+          npm ci --omit=dev
+          node -e "require('dotenv'); require('express'); require('pino'); require('ssh2'); require('ws')"
 
       # SECURITY: backend (ctf.ssh.password=${CTF_SSH_PASSWORD}) and the
       # terminal gateway (server.js fail-fast) both refuse to boot without

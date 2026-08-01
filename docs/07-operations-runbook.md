@@ -194,7 +194,8 @@ High-level deployment sequence:
     copy static assets into standalone tree
 
 - Deploy Terminal:
-    copy ctf-terminal/server.js to /opt/ctf/terminal/server.js
+    copy server.js + package.json + package-lock.json to /opt/ctf/terminal/
+    npm ci --omit=dev   # reinstalls node_modules to match the committed lockfile
 
 - Restart Services:
     systemctl restart ctf-backend ctf-frontend ctf-terminal
@@ -213,6 +214,7 @@ The current deployment model relies on these contracts:
 | `ctf-frontend` service | `student:student` | Keeps runtime-generated frontend files deployable by the runner |
 | `/opt/ctf/backend/challenges` | group `ctf`, setgid enabled | Backend service must be able to traverse/read/write challenge folders |
 | `ctf-backend` service | `ctf` | Must have Docker access and challenge storage access |
+| `/opt/ctf/terminal/node_modules` | runner user (e.g. `student`) | The deploy runs `npm ci --omit=dev` as the runner without sudo; the directory must stay writable by it. If a manual `sudo npm ci` was ever run, repair with `sudo chown -R student:student /opt/ctf/terminal` |
 
 ### 4.3 Why `NEXT_PUBLIC_TERMINAL_URL` matters
 
@@ -793,7 +795,42 @@ Check in this order:
    grep -R "containerName" /opt/ctf/frontend/.next/static /opt/ctf/frontend/.next/standalone/.next/static 2>/dev/null | head -20
    ```
 
-### 11.3 GitHub Actions frontend deploy fails with permission denied
+### 11.3 Terminal crash-loops with `MODULE_NOT_FOUND`
+
+Symptom — `journalctl -u ctf-terminal` repeats:
+
+```text
+Error: Cannot find module 'dotenv'
+... restart counter is at 4 ...
+Start request repeated too quickly.
+Failed to start ctf-terminal.service
+```
+
+Likely root causes, in order:
+
+1. **Stale `node_modules` / stale manifest** — the deployed `server.js` requires a
+   module that the host's installed packages do not provide. The native deploy
+   now copies `package.json` + `package-lock.json` and runs `npm ci --omit=dev`
+   on every deploy, so this should only recur if a manual install diverged.
+2. **`CTF_SSH_PASSWORD` missing** — `server.js` exits with `FATAL` if the
+   variable is absent (see `systemctl show ctf-terminal -p EnvironmentFiles`).
+3. **Port 3001 already in use** — `EADDRINUSE` crash loop.
+
+Fix on the host:
+
+```bash
+# Ensure the manifest matches the repo, then reinstall exactly the pinned deps
+sudo cp <repo>/ctf-terminal/package.json <repo>/ctf-terminal/package-lock.json /opt/ctf/terminal/
+cd /opt/ctf/terminal && sudo npm ci --omit=dev
+sudo chown -R student:student /opt/ctf/terminal   # undo root-owned node_modules (see §4.2)
+sudo systemctl restart ctf-terminal
+curl -sS -w '\nHTTP %{http_code}\n' http://localhost:3001/health   # expect {"status":"ok",...} HTTP 200
+```
+
+> **Do not** run `npm install <module>` manually to "patch" the gateway — it
+> diverges from the lockfile and re-creates the drift that caused the crash.
+
+### 11.4 GitHub Actions frontend deploy fails with permission denied
 
 Check:
 
@@ -989,6 +1026,8 @@ frontend WebSocket build URL: ws://.../terminal
 | 2026-05-25 | Changed frontend terminal URL from `wss://` to `ws://` | Deployed bundle contained `ws://.../terminal/?instanceId=...&containerName=...&sshPort=...`; terminal worked |
 | 2026-05-25 | Configured frontend service to run as `student:student` | Service returned HTTP 200; no root-owned `.next` files remained |
 | 2026-05-25 | Reran failed frontend deployment after partial `.next` deletion | Missing standalone server restored; frontend operational |
+| 2026-08-01 | Reinstalled terminal `node_modules` from the committed lockfile after `MODULE_NOT_FOUND: dotenv` crash loop | `curl http://localhost:3001/health` returned `HTTP 200` |
+| 2026-08-01 | Deploy workflow now ships terminal `package.json`/`package-lock.json` and runs `npm ci --omit=dev` on the host | Health check step passes with `Terminal: OK` |
 
 ---
 
