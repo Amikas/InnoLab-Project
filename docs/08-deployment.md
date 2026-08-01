@@ -62,26 +62,53 @@ env:
 3. **Deploy Backend** — Copy JAR to `/opt/ctf/backend/app.jar`
 4. **Deploy Frontend** — Remove `/opt/ctf/frontend/.next`, copy new `.next`, copy static assets
 5. **Deploy Terminal** — Copy `server.js` to `/opt/ctf/terminal/server.js`
-6. **Verify `CTF_SSH_PASSWORD`** — Aborts if `ctf-backend`/`ctf-terminal` systemd units lack `CTF_SSH_PASSWORD` (both fail to boot without it)
+6. **Verify `CTF_SSH_PASSWORD`** — Aborts unless both units load `EnvironmentFile=/opt/ctf/ctf.env` and that file contains a non-empty `CTF_SSH_PASSWORD` (both services fail to boot without it). Note: `systemctl show -p Environment` does **not** surface `EnvironmentFile=` variables — the guard checks the `EnvironmentFiles` property plus the file contents directly.
 7. **Restart Services** — `systemctl restart ctf-backend ctf-frontend ctf-terminal`
 8. **Health Check** — Retry up to 30s: `localhost:3000`, `localhost:3001/health`, `localhost:8080/api/health`
 
 > **`CTF_SSH_PASSWORD` is required in production (fail-fast).** The backend reads
 > `ctf.ssh.password=${CTF_SSH_PASSWORD}` (no default) and injects it into every
 > challenge container (`-e CTF_SSH_PASSWORD=...` + `docker exec chpasswd`); the
-> terminal gateway calls `process.exit(1)` when it is missing. Set it **once** in
-> the systemd units **before** deploying the version that requires it:
+> terminal gateway calls `process.exit(1)` when it is missing.
+>
+> **Single source of truth (recommended):** point both units at the **same**
+> `EnvironmentFile` so the value cannot drift. Do this **once, before** deploying
+> the version that requires it:
 >
 > ```bash
-> # generate: openssl rand -hex 32
+> # 1. Create one root-only secrets file (only copy of the secret)
+> sudo mkdir -p /opt/ctf
+> echo "CTF_SSH_PASSWORD=$(openssl rand -hex 32)" | sudo tee /opt/ctf/ctf.env > /dev/null
+> sudo chown root:root /opt/ctf/ctf.env
+> sudo chmod 600 /opt/ctf/ctf.env
+>
+> # 2. Both units read the same file
 > sudo systemctl edit ctf-backend
 > #   [Service]
-> #   Environment="CTF_SSH_PASSWORD=<strong-password>"
+> #   EnvironmentFile=/opt/ctf/ctf.env
 > sudo systemctl edit ctf-terminal
 > #   [Service]
-> #   Environment="CTF_SSH_PASSWORD=<strong-password>"
+> #   EnvironmentFile=/opt/ctf/ctf.env
 > sudo systemctl daemon-reload
 > ```
+>
+> The deploy workflow **fails fast** unless: (1) both units reference the shared
+> `EnvironmentFile=/opt/ctf/ctf.env` (checked via `systemctl show -p EnvironmentFiles`),
+> and (2) that file contains a non-empty `CTF_SSH_PASSWORD`. Because both units
+> read the same file, the value is structurally identical — no drift is possible.
+>
+> **Runner prerequisites (self-hosted, non-interactive):** the runner account
+> needs passwordless `sudo` for the deploy's commands. Minimal rule for the
+> runner user (here `student`):
+>
+> ```
+> student ALL=(root) NOPASSWD: /usr/bin/systemctl restart ctf-*, /usr/bin/systemctl start ctf-*, /usr/bin/systemctl stop ctf-*, /usr/bin/systemctl show ctf-*, /usr/bin/cat /opt/ctf/ctf.env
+> ```
+>
+> The deploy also needs the runner to read `/opt/ctf/ctf.env` (root-only, 600),
+> hence the `cat` entry. Verify non-interactively with:
+> `sudo -n systemctl show ctf-backend -p EnvironmentFiles --no-pager` and
+> `sudo -n cat /opt/ctf/ctf.env` (must print the `CTF_SSH_PASSWORD=` line).
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 
@@ -124,8 +151,8 @@ WorkingDirectory=/opt/ctf/backend
 ExecStart=/usr/bin/java -jar app.jar
 Environment="DOCKER_HOST=unix:///var/run/docker.sock"
 Environment="TERMINAL_GATEWAY_URL=http://localhost:3001"
-# REQUIRED (no default in application.properties):
-Environment="CTF_SSH_PASSWORD=<strong-password>"
+# REQUIRED (no default in application.properties) — shared with ctf-terminal:
+EnvironmentFile=/opt/ctf/ctf.env
 Restart=always
 ```
 
@@ -144,8 +171,8 @@ Environment="PORT=3000"
 [Service]
 Type=simple
 ExecStart=/usr/bin/node /opt/ctf/terminal/server.js
-# REQUIRED (server.js exits with FATAL if missing):
-Environment="CTF_SSH_PASSWORD=<strong-password>"
+# REQUIRED (server.js exits with FATAL if missing) — shared with ctf-backend:
+EnvironmentFile=/opt/ctf/ctf.env
 Restart=always
 ```
 
