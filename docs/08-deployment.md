@@ -39,6 +39,7 @@ docker compose up -d
 | `NEXT_PUBLIC_API_URL` | frontend | Frontend → backend API |
 | `API_PROXY_TARGET` | frontend | Next.js proxy target |
 | `POSTGRES_USER/PASS/DB` | db | Database credentials |
+| `CTF_SSH_PASSWORD` | app, terminal | SSH password for challenge containers (required; see below) |
 
 ---
 
@@ -61,8 +62,26 @@ env:
 3. **Deploy Backend** — Copy JAR to `/opt/ctf/backend/app.jar`
 4. **Deploy Frontend** — Remove `/opt/ctf/frontend/.next`, copy new `.next`, copy static assets
 5. **Deploy Terminal** — Copy `server.js` to `/opt/ctf/terminal/server.js`
-6. **Restart Services** — `systemctl restart ctf-backend ctf-frontend ctf-terminal`
-7. **Health Check** — Retry up to 30s: `localhost:3000`, `localhost:3001/health`, `localhost:8080/api/health`
+6. **Verify `CTF_SSH_PASSWORD`** — Aborts if `ctf-backend`/`ctf-terminal` systemd units lack `CTF_SSH_PASSWORD` (both fail to boot without it)
+7. **Restart Services** — `systemctl restart ctf-backend ctf-frontend ctf-terminal`
+8. **Health Check** — Retry up to 30s: `localhost:3000`, `localhost:3001/health`, `localhost:8080/api/health`
+
+> **`CTF_SSH_PASSWORD` is required in production (fail-fast).** The backend reads
+> `ctf.ssh.password=${CTF_SSH_PASSWORD}` (no default) and injects it into every
+> challenge container (`-e CTF_SSH_PASSWORD=...` + `docker exec chpasswd`); the
+> terminal gateway calls `process.exit(1)` when it is missing. Set it **once** in
+> the systemd units **before** deploying the version that requires it:
+>
+> ```bash
+> # generate: openssl rand -hex 32
+> sudo systemctl edit ctf-backend
+> #   [Service]
+> #   Environment="CTF_SSH_PASSWORD=<strong-password>"
+> sudo systemctl edit ctf-terminal
+> #   [Service]
+> #   Environment="CTF_SSH_PASSWORD=<strong-password>"
+> sudo systemctl daemon-reload
+> ```
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 
@@ -105,6 +124,8 @@ WorkingDirectory=/opt/ctf/backend
 ExecStart=/usr/bin/java -jar app.jar
 Environment="DOCKER_HOST=unix:///var/run/docker.sock"
 Environment="TERMINAL_GATEWAY_URL=http://localhost:3001"
+# REQUIRED (no default in application.properties):
+Environment="CTF_SSH_PASSWORD=<strong-password>"
 Restart=always
 ```
 
@@ -123,6 +144,8 @@ Environment="PORT=3000"
 [Service]
 Type=simple
 ExecStart=/usr/bin/node /opt/ctf/terminal/server.js
+# REQUIRED (server.js exits with FATAL if missing):
+Environment="CTF_SSH_PASSWORD=<strong-password>"
 Restart=always
 ```
 

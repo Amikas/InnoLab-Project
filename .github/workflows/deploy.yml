@@ -56,6 +56,28 @@ jobs:
       - name: Deploy Terminal
         run: cp ctf-terminal/server.js ${{ env.DEPLOY_DIR }}/terminal/server.js
 
+      # SECURITY: backend (ctf.ssh.password=${CTF_SSH_PASSWORD}) and the
+      # terminal gateway (server.js fail-fast) both refuse to boot without
+      # CTF_SSH_PASSWORD. It must be present in the systemd units BEFORE the
+      # new binaries are deployed; fail fast here instead of taking the
+      # services down.
+      # Both units must use the SAME non-empty value: the backend injects it
+      # into challenge containers and the terminal uses it to SSH in.
+      - name: Verify CTF_SSH_PASSWORD is configured
+        run: |
+          for svc in ctf-backend ctf-terminal; do
+            if ! sudo systemctl show "$svc" -p Environment --no-pager | grep -q 'CTF_SSH_PASSWORD=[^ ]'; then
+              echo "ERROR: $svc has no non-empty CTF_SSH_PASSWORD in its systemd environment."
+              echo "Configure it on the host first, then rerun the deploy:"
+              echo "  sudo systemctl edit $svc"
+              echo '    [Service]'
+              echo '    Environment="CTF_SSH_PASSWORD=<strong-password>"'
+              echo '  sudo systemctl daemon-reload'
+              exit 1
+            fi
+          done
+          echo "CTF_SSH_PASSWORD set in ctf-backend and ctf-terminal units"
+
       - name: Restart Services
         run: sudo systemctl restart ctf-backend ctf-frontend ctf-terminal
 
