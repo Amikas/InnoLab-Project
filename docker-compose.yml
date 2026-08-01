@@ -15,6 +15,9 @@ services:
     environment:
       - PORT=3001
       - USE_DOCKER_DNS=true
+      # SECURITY: required env (fail-fast on missing - see server.js).
+      - CTF_SSH_PASSWORD=${CTF_SSH_PASSWORD:?CTF_SSH_PASSWORD must be set in .env}
+      - LOG_LEVEL=info
     restart: unless-stopped
 
   app:
@@ -25,6 +28,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - challenges_data:/app/challenges
+      - backend_logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8080:8080"
@@ -40,6 +44,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - TERMINAL_GATEWAY_URL=http://terminal:3001
       - TERMINAL_WS_URL=ws://terminal:3001
+      - CTF_SSH_PASSWORD=${CTF_SSH_PASSWORD:?CTF_SSH_PASSWORD must be set in .env}
     command: bash -c "java -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit -jar app.jar"
     extra_hosts:
       - "ldap.technikum-wien.at:172.31.249.50"
@@ -93,6 +98,7 @@ services:
 volumes:
   pgdata:
   challenges_data:
+  backend_logs:
   sonar_data:
   sonar_extensions:
   sonar_logs:

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import at.fhtw.ctfbackend.logging.LogSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,9 @@ public class DockerService {
     // Base path for challenges
     @Value("${challenges.base.path:./challenges}")
     private String challengesBasePath;
+
+    @Value("${ctf.ssh.password:ctfpassword}")
+    private String ctfSshPassword;
 
     // Add the ChallengeFileStorageService dependency
     private final ChallengeFileStorageService fileStorageService;
@@ -60,7 +64,7 @@ public class DockerService {
             command.add(buildContextDir);
 
             logger.debug("=== DOCKER BUILD DEBUG ===");
-            logger.debug("Command: {}", String.join(" ", command));
+            logger.debug("Command: {}", String.join(" ", LogSafe.maskProcessArgs(command)));
             logger.debug("Build context: {}", buildContextDir);
             logger.debug("Dockerfile: {}", dockerfilePath);
             logger.debug("Image tag: {}", tag);
@@ -78,7 +82,7 @@ public class DockerService {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        logger.debug("   {}", line);
+                        logger.debug("   {}", LogSafe.sanitizeMessage(line));
                         output.append(line).append("\n");
                     }
                     logger.debug("=== DOCKER BUILD DEBUG: readLine() returned null (EOF) ===");
@@ -251,6 +255,7 @@ public class DockerService {
                     "--name", containerName,
                     "--network", "ctf-network",
                     "-e", "FLAG=" + flag,
+                    "-e", "CTF_SSH_PASSWORD=" + ctfSshPassword,
                     "-p", sshPort + ":22"
             ));
 
@@ -261,6 +266,10 @@ public class DockerService {
 
             command.add(imageName);
 
+            // SECURITY: never log the raw command — LogSafe masks "FLAG=...".
+            logger.debug("Container launch command: {}",
+                    String.join(" ", LogSafe.maskProcessArgs(command)));
+
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -270,7 +279,7 @@ public class DockerService {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    logger.debug("   {}", line);
+                    logger.debug("   {}", LogSafe.sanitizeMessage(line));
                     output.append(line).append("\n");
                 }
             }
@@ -282,12 +291,27 @@ public class DockerService {
                 throw new RuntimeException("Docker run failed with exit code " + exitCode + ":\n" + output);
             }
 
+            setContainerSshPassword(containerName);
+
             // Wait a moment for container to fully initialize
             Thread.sleep(2000);
 
         } catch (Exception e) {
-            logger.error("runContainer failed: {}", e.getMessage(), e);
+            logger.error("runContainer failed: {}", LogSafe.sanitizeThrowable(e));
             throw new RuntimeException("Failed to run container: " + e.getMessage(), e);
+        }
+    }
+
+    private void setContainerSshPassword(String containerName) throws IOException, InterruptedException {
+        ProcessBuilder passwordCommand = new ProcessBuilder(
+                "docker", "exec", "-i", containerName, "chpasswd");
+        passwordCommand.redirectErrorStream(true);
+        Process process = passwordCommand.start();
+        try (var input = process.getOutputStream()) {
+            input.write(("ctfuser:" + ctfSshPassword + "\n").getBytes());
+        }
+        if (process.waitFor() != 0) {
+            throw new RuntimeException("Failed to configure challenge container SSH credentials");
         }
     }
 

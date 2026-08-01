@@ -107,8 +107,8 @@ Use the admin dashboard (`/admin`) — fill in title, description, category, dif
    ```dockerfile
    FROM alpine:latest
    RUN apk add --no-cache openssh-server bash
-   RUN adduser -D -s /bin/bash ctfuser && \
-       echo "ctfuser:ctfpassword" | chpasswd
+    RUN adduser -D -s /bin/bash ctfuser && \
+        echo "ctfuser:ctfpassword" | chpasswd
    RUN sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
    EXPOSE 22
    COPY entrypoint.sh /entrypoint.sh
@@ -120,7 +120,10 @@ Use the admin dashboard (`/admin`) — fill in title, description, category, dif
    ```bash
    #!/bin/sh
    set -e
-   ssh-keygen -A
+    ssh-keygen -A
+    if [ -n "$CTF_SSH_PASSWORD" ]; then
+        echo "ctfuser:$CTF_SSH_PASSWORD" | chpasswd
+    fi
    if [ -n "$FLAG" ]; then
        echo "$FLAG" > /flag.txt
        chown ctfuser:ctfuser /flag.txt

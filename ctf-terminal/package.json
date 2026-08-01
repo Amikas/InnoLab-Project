@@ -2,8 +2,10 @@
   "name": "ctf-terminal",
   "version": "1.0.0",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
-    "ws": "^8.14.2",
-    "ssh2": "^1.14.0"
+    "pino": "^9.0.0",
+    "ssh2": "^1.14.0",
+    "ws": "^8.14.2"
   }
 }

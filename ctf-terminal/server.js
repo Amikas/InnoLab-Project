@@ -1,17 +1,62 @@
 // ctf-terminal/server.js
+// Terminal gateway: WebSocket → SSH bridge into per-user challenge containers.
+//
+// Logging: pino with built-in redaction of identifier fields, so contributors
+// cannot accidentally leak containerName/sshPort/instanceId/password through
+// the log stream. Set LOG_LEVEL=debug in dev for verbose output.
+//
+// Security: CTF_SSH_PASSWORD is required from the environment. The gateway
+// refuses to start without it (fail-fast) rather than booting insecure.
+require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 const express = require("express");
 const WebSocket = require("ws");
 const http = require("http");
 const { Client } = require('ssh2');
 const net = require('net');
+const pino = require('pino');
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// SECURITY: fail-fast on missing SSH password rather than booting insecure.
+const CTF_SSH_PASSWORD = process.env.CTF_SSH_PASSWORD;
+if (!CTF_SSH_PASSWORD) {
+    process.stderr.write(
+        "FATAL: CTF_SSH_PASSWORD environment variable is required. " +
+        "Set it in .env (see .env.example) or your docker-compose environment block.\n"
+    );
+    process.exit(1);
+}
+
+const LOG_LEVEL = (process.env.LOG_LEVEL || 'info').toLowerCase();
+const logger = pino({
+    level: LOG_LEVEL,
+    redact: {
+        // Scrub credentials and identifiers that correlate to a user's
+        // session so contributors can't accidentally leak them through
+        // any logger call. Defensive — default-deny.
+        paths: [
+            'password', 'ctfpassword', 'CTF_SSH_PASSWORD',
+            '*.password', '*.ctfpassword',
+            // host stays redacted because in Docker DNS mode it carries the
+            // container name (a session-correlating identifier). port is safe
+            // to expose (22 in Docker mode, the mapped port in native dev),
+            // so the readiness/connect probes keep some debuggability.
+            'host', '*.host',
+            'containerName', 'sshPort', 'instanceId', 'sshHost', 'sshPortNum',
+            '*.containerName', '*.sshPort', '*.instanceId', '*.sshHost', '*.sshPortNum',
+            'config.password', 'config.username',
+        ],
+        censor: '[REDACTED]',
+    },
+    base: { service: 'ctf-terminal' },
+    timestamp: pino.stdTimeFunctions.isoTime,
+});
 
 // When running inside Docker, connect via container name on port 22.
 // When running natively on host, connect via 127.0.0.1:<mapped-port>.
 const USE_DOCKER_DNS = process.env.USE_DOCKER_DNS === 'true';
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 // Basic CORS
 app.use((req, res, next) => {
@@ -21,41 +66,38 @@ app.use((req, res, next) => {
 
 // Health check
 app.get("/health", (req, res) => {
-    res.json({ 
-        status: "ok", 
-        connections: wss.clients.size 
+    res.json({
+        status: "ok",
+        connections: wss.clients.size,
     });
 });
 
 // Helper to check if SSH port is actually responding
 async function checkSSHPort(host, port, timeout = 10000) {
     return new Promise((resolve) => {
-        const socket = net.createConnection({ 
-            host, 
-            port, 
-            timeout,
-            // Add lookup timeout for DNS resolution
+        const socket = net.createConnection({
+            host, port, timeout,
             lookup: (hostname, options, callback) => {
                 require('dns').lookup(hostname, options, callback);
             }
         });
-        
+
         socket.setTimeout(timeout);
-        
+
         socket.on('connect', () => {
             socket.destroy();
-            console.log(`[SSH Check]  Port ${port} on ${host} is reachable`);
+            logger.info({ host, port }, 'SSH port reachable');
             resolve(true);
         });
-        
+
         socket.on('timeout', () => {
-            console.log(`[SSH Check] ⏱ Timeout connecting to ${host}:${port}`);
             socket.destroy();
+            logger.warn({ host, port }, 'SSH port timeout');
             resolve(false);
         });
-        
+
         socket.on('error', (err) => {
-            console.log(`[SSH Check]  Error connecting to ${host}:${port}: ${err.code}`);
+            logger.warn({ host, port, code: err.code }, 'SSH port error');
             resolve(false);
         });
     });
@@ -64,24 +106,22 @@ async function checkSSHPort(host, port, timeout = 10000) {
 // Helper to wait for SSH to be ready with exponential backoff
 async function waitForSSH(host, port, maxAttempts = 12, baseDelay = 2000) {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        console.log(`[SSH Check] Attempt ${attempt}/${maxAttempts} for ${host}:${port}`);
-        
+        logger.info({ host, port, attempt, maxAttempts }, 'SSH readiness probe');
+
         const isReady = await checkSSHPort(host, port);
-        
         if (isReady) {
-            console.log(`[SSH Check]  SSH is ready on ${host}:${port}`);
+            logger.info({ host, port }, 'SSH is ready');
             return true;
         }
-        
+
         if (attempt < maxAttempts) {
-            // Exponential backoff: 2s, 3s, 4.5s, 6.7s, etc (max ~60s total)
             const delay = Math.min(baseDelay * Math.pow(1.5, attempt - 1), 10000);
-            console.log(`[SSH Check] Not ready yet, waiting ${Math.round(delay)}ms...`);
+            logger.debug({ delay }, 'Waiting before next attempt');
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
-    
-    console.log(`[SSH Check]  SSH failed to become ready after ${maxAttempts} attempts`);
+
+    logger.error({ host, port, attempts: maxAttempts }, 'SSH failed to become ready');
     return false;
 }
 
@@ -90,7 +130,7 @@ async function connectSSHWithRetry(config, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const conn = new Client();
-            
+
             await new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => {
                     conn.removeAllListeners();
@@ -105,35 +145,39 @@ async function connectSSHWithRetry(config, maxRetries = 3) {
 
                 conn.once('error', (err) => {
                     clearTimeout(timeout);
-                    console.error(`[${config.instanceId}] SSH Error:`, err.message);
-                    console.error(`[${config.instanceId}] SSH Error Code:`, err.code);
-                    console.error(`[${config.instanceId}] SSH Error Level:`, err.level);
+                    logger.error({
+                        instanceId: config.instanceId,
+                        message: err.message,
+                        code: err.code,
+                        level: err.level,
+                    }, 'SSH connect error');
                     reject(err);
                 });
 
-                console.log(`[${config.instanceId}] SSH connect config:`, JSON.stringify({
+                logger.info({
+                    instanceId: config.instanceId,
                     host: config.host,
                     port: config.port,
                     username: config.username,
-                    readyTimeout: config.readyTimeout,
-                    tryKeyboard: config.tryKeyboard
-                }));
-                console.log(`[${config.instanceId}] SSH connection attempt ${attempt}/${maxRetries}`);
+                    attempt,
+                    maxRetries,
+                }, 'SSH connect attempt');
                 conn.connect(config);
             });
-            
-            return conn; // Success!
-            
+
+            return conn;
+
         } catch (err) {
-            console.error(`[${config.instanceId}] SSH attempt ${attempt}/${maxRetries} FAILED:`, err.message);
-            console.error(`[${config.instanceId}] Error stack:`, err.stack);
-            
+            logger.error({
+                instanceId: config.instanceId,
+                attempt, maxRetries,
+                message: err.message,
+            }, 'SSH attempt failed');
+
             if (attempt === maxRetries) {
-                throw err; // Final attempt failed
+                throw err;
             }
-            
-            // Wait before retry
-            console.log(`[${config.instanceId}] Waiting 2s before retry...`);
+
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
@@ -146,39 +190,33 @@ wss.on("connection", async (ws, req) => {
     const instanceId = url.searchParams.get("instanceId");
     const sshPort = url.searchParams.get("sshPort");
 
-    console.log(`[${instanceId}] New connection → Container: ${containerName}, SSH Port: ${sshPort}`);
+    logger.info({ instanceId, containerName, sshPort }, 'New connection');
 
-    // Validate container name
     if (!containerName) {
         ws.send("Error: No container name specified\r\n");
         ws.close();
         return;
     }
 
-    // Use sshPort if provided (mapped port on host), otherwise use container name with port 22
-    // For containers in ctf-network, connect via localhost with mapped port
     const sshHost = USE_DOCKER_DNS ? containerName : '127.0.0.1';
     const sshPortNum = USE_DOCKER_DNS ? 22 : (sshPort ? parseInt(sshPort, 10) : 22);
 
-    console.log(`[${instanceId}] Connecting to SSH at ${sshHost}:${sshPortNum}`);
+    logger.info({ instanceId, sshHost, sshPortNum }, 'Resolving SSH target');
 
-    // Send status update to client
-    ws.send(`\r\n\x1b[1;36m Waiting for SSH service to start...\x1b[0m\r\n`);
-    
-    // Wait for SSH to be ready
+    ws.send("\r\n\x1b[1;36m Waiting for SSH service to start...\x1b[0m\r\n");
+
     const sshReady = await waitForSSH(sshHost, sshPortNum);
-    
+
     if (!sshReady) {
-        ws.send(`\r\n\x1b[1;31m SSH service failed to start\x1b[0m\r\n`);
-        ws.send(`\x1b[1;33mPlease try again in a moment or contact support\x1b[0m\r\n`);
+        ws.send("\r\n\x1b[1;31m SSH service failed to start\x1b[0m\r\n");
+        ws.send("\x1b[1;33mPlease try again in a moment or contact support\x1b[0m\r\n");
         ws.close();
         return;
     }
 
-    ws.send(`\r\n\x1b[1;32m SSH service is ready!\x1b[0m\r\n`);
-    ws.send(`\x1b[1;36m Establishing secure connection...\x1b[0m\r\n`);
+    ws.send("\r\n\x1b[1;32m SSH service is ready!\x1b[0m\r\n");
+    ws.send("\x1b[1;36m Establishing secure connection...\x1b[0m\r\n");
 
-    // SSH connection with retry - use sshHost and sshPortNum
     let conn;
     let shell = null;
 
@@ -187,13 +225,14 @@ wss.on("connection", async (ws, req) => {
             host: sshHost,
             port: sshPortNum,
             username: 'ctfuser',
-            password: 'ctfpassword',
+            // SECURITY: read from env, never hard-coded.
+            password: CTF_SSH_PASSWORD,
             readyTimeout: 10000,
             tryKeyboard: true,
-            instanceId: instanceId
+            instanceId
         });
     } catch (err) {
-        console.error(`[${instanceId}] All SSH connection attempts failed:`, err.message);
+        logger.error({ instanceId, message: err.message }, 'All SSH connection attempts failed');
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(`\r\n\x1b[1;31m Failed to establish SSH connection\x1b[0m\r\n`);
             ws.send(`\x1b[1;33mError: ${err.message}\x1b[0m\r\n`);
@@ -202,23 +241,21 @@ wss.on("connection", async (ws, req) => {
         return;
     }
 
-    console.log(`[${instanceId}] SSH connected successfully to ${containerName}`);
-    console.log(`[${instanceId}] Requesting shell...`);
+    logger.info({ instanceId, containerName }, 'SSH connected');
+    logger.info({ instanceId }, 'Requesting shell');
 
-    // Request shell immediately (connection is already ready)
     conn.shell({ term: 'xterm-256color' }, (err, stream) => {
         if (err) {
-            console.error(`[${instanceId}] Failed to create shell:`, err.message);
+            logger.error({ instanceId, message: err.message }, 'Failed to create shell');
             ws.send(`\r\n\x1b[1;31m Error creating shell: ${err.message}\x1b[0m\r\n`);
             conn.end();
             ws.close();
             return;
         }
 
-        console.log(`[${instanceId}] Shell created successfully`);
+        logger.info({ instanceId }, 'Shell created');
         shell = stream;
 
-        // SSH → WebSocket
         stream.on('data', (data) => {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(data);
@@ -226,12 +263,11 @@ wss.on("connection", async (ws, req) => {
         });
 
         stream.on('close', () => {
-            console.log(`[${instanceId}] Shell closed`);
+            logger.info({ instanceId }, 'Shell closed');
             ws.close();
             conn.end();
         });
 
-        // Send success message
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(`\r\n\x1b[1;32m\x1b[0m\r\n`);
             ws.send(`\x1b[1;32m    Connected to ${containerName.padEnd(18)} \x1b[0m\r\n`);
@@ -242,24 +278,23 @@ wss.on("connection", async (ws, req) => {
     });
 
     conn.on('error', (err) => {
-        console.error(`[${instanceId}] SSH error for ${containerName}:`, err.message);
+        logger.error({ instanceId, message: err.message }, 'SSH error');
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(`\r\n\x1b[1;31m SSH Connection failed: ${err.message}\x1b[0m\r\n`);
             ws.close();
         }
     });
 
-    // WebSocket → SSH
     ws.on('message', (data) => {
         if (shell && shell.writable) {
             shell.write(data);
         } else {
-            console.log(`[${instanceId}] Shell not ready, dropping input`);
+            logger.debug({ instanceId }, 'Shell not ready, dropping input');
         }
     });
 
     ws.on('close', () => {
-        console.log(`[${instanceId}] WebSocket closed for ${containerName}`);
+        logger.info({ instanceId, containerName }, 'WebSocket closed');
         if (shell) shell.end();
         if (conn) conn.end();
     });
@@ -267,8 +302,5 @@ wss.on("connection", async (ws, req) => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(` CTF Terminal Gateway running on port ${PORT}`);
-    console.log(` Listening on 0.0.0.0:${PORT}`);
-    console.log(`⏳ SSH readiness checks enabled with exponential backoff`);
-    console.log(` Using Docker network DNS for container connections`);
+    logger.info({ port: PORT }, 'CTF Terminal Gateway listening');
 });
