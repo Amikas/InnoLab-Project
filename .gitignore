@@ -23,4 +23,6 @@ AGENTS.md
 repomix-output.xml
 repomix.config.json
 .idea/
-.idea/
+.freebuff/
+opencode.json
+ctf-backend/logs/
