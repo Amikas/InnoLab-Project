@@ -30,6 +30,27 @@ interface ChallengeDetailProps {
     setSolveStats?: (stats: { solveCount: number; solvedByUser: boolean } | null) => void;
 }
 
+// Turn a raw API error into something a student can actually act on.
+// Server-provided messages are curated by the backend, so they pass through;
+// only transport-level or generic failures get rewritten here.
+function friendlyEnvironmentError(rawMessage?: string): string {
+    const msg = rawMessage || "";
+    const lower = msg.toLowerCase();
+
+    if (
+        !msg ||
+        lower.includes("failed to fetch") ||
+        lower.includes("network error") ||
+        lower.includes("network request failed")
+    ) {
+        return "Network error. Please check your connection and try again.";
+    }
+    if (lower.includes("request failed (") || lower.includes("internal server error")) {
+        return "Something went wrong with the environment. Please try again in a few minutes.";
+    }
+    return msg;
+}
+
 
 export default function ChallengeDetail({ challenge, solveStats = null, setSolveStats }: ChallengeDetailProps) {
     const [flag, setFlag] = useState("");
@@ -215,7 +236,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
             console.error("Failed to build and start environment:", error);
             setResult({
                 status: "error",
-                message: `Failed to start environment: ${error?.message || "Unknown error"}`,
+                message: friendlyEnvironmentError(error?.message),
             });
         } finally {
             setStartingTerminal(false);
@@ -239,7 +260,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
             console.error(" Failed to stop environment:", error);
             setResult({
                 status: "error",
-                message: `Failed to stop environment: ${error?.message || "Unknown error"}`,
+                message: friendlyEnvironmentError(error?.message),
             });
         } finally {
             setStoppingTerminal(false);

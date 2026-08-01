@@ -1,10 +1,12 @@
 package at.fhtw.ctfbackend.services;
 
+import at.fhtw.ctfbackend.controller.EnvironmentStartException;
 import at.fhtw.ctfbackend.entity.ChallengeEntity;
 import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
 import at.fhtw.ctfbackend.entity.UserEntity;
 import at.fhtw.ctfbackend.repository.ChallengeInstanceRepository;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -211,7 +213,17 @@ public class EnvironmentService {
         String flagHash = sha256(realFlag);
 
         // Allocate SSH port
-        int sshPort = allocatePort(SSH_BASE);
+        int sshPort;
+        try {
+            sshPort = allocatePort(SSH_BASE);
+        } catch (RuntimeException e) {
+            throw new EnvironmentStartException(
+                    "All environment slots are currently in use. Please stop an existing environment or try again in a few minutes.",
+                    "Port allocation failed: " + e.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    e
+            );
+        }
 
         // Create instance entry
         String instanceId = UUID.randomUUID().toString();
@@ -250,8 +262,44 @@ public class EnvironmentService {
                 logger.error("CRITICAL: Failed to rollback DB record for instance: {} - {}", instanceId, dbEx.getMessage());
             }
             releasePort(sshPort);
-            throw new RuntimeException("Failed to build and start challenge", e);
+            throw toUserFriendly(e);
         }
+    }
+
+    /**
+     * Translate a technical startup failure into an {@link EnvironmentStartException}
+     * carrying a user-safe message. The raw detail stays in the exception message
+     * so it is logged server-side but never sent to the caller.
+     */
+    static EnvironmentStartException toUserFriendly(Exception e) {
+        String msg = e.getMessage() == null ? "" : e.getMessage();
+
+        if (msg.contains("Cannot connect to the Docker daemon") || msg.contains("Cannot run program")) {
+            return new EnvironmentStartException(
+                    "The environment service is temporarily unavailable. Please try again in a few minutes.",
+                    msg, HttpStatus.SERVICE_UNAVAILABLE, e);
+        }
+        if (msg.contains("network ctf-network not found")
+                || msg.contains("Failed to ensure Docker network")
+                || msg.contains("Failed to create Docker network")) {
+            return new EnvironmentStartException(
+                    "The challenge network could not be created. Please contact an administrator.",
+                    msg, HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+        if (msg.contains("Dockerfile not found") || msg.contains("No Dockerfile found")
+                || msg.contains("Failed to recreate challenge directory")) {
+            return new EnvironmentStartException(
+                    "This challenge's environment is not set up correctly. Please contact an administrator.",
+                    msg, HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+        if (msg.contains("Docker build failed") || msg.contains("Docker run failed")) {
+            return new EnvironmentStartException(
+                    "The environment could not be built or started. Please try again or contact an administrator.",
+                    msg, HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+        return new EnvironmentStartException(
+                "Something went wrong while starting your environment. Please try again in a few minutes.",
+                msg, HttpStatus.INTERNAL_SERVER_ERROR, e);
     }
 
     // ===== PORT MANAGEMENT =====

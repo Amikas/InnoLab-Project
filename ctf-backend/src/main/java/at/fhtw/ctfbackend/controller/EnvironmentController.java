@@ -117,10 +117,18 @@ public class EnvironmentController {
 
             return ResponseEntity.ok(response);
 
+        } catch (EnvironmentStartException e) {
+            // User-safe message, deliberately not the raw technical detail.
+            logger.error("Build failed for challenge {} by user {}: {}", challengeId, username,
+                    e.getMessage(), e);
+            return ResponseEntity.status(e.getStatus()).body(Map.of("error", e.getUserMessage()));
+
         } catch (Exception e) {
             logger.error("Build failed for challenge {} by user {}: {}", challengeId, username,
                     e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to build and start challenge"));
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", "Something went wrong while starting your environment. Please try again in a few minutes."
+            ));
         }
     }
 }

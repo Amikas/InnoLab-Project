@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
@@ -107,5 +109,20 @@ class EnvironmentControllerAuthorizationTest {
 
         mockMvc.perform(post("/api/environment/stop/inst-1").cookie(authCookie("userB")))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void buildAndStartFailure_returnsCuratedUserMessageAndStatus() throws Exception {
+        when(environmentService.buildAndStartChallenge(eq("userA"), eq("chal-1")))
+                .thenThrow(new EnvironmentStartException(
+                        "All environment slots are currently in use. Please stop an existing environment or try again in a few minutes.",
+                        "No available ports in range 30000-31000",
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        null));
+
+        mockMvc.perform(post("/api/environment/build/chal-1").cookie(authCookie("userA")))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.error")
+                        .value("All environment slots are currently in use. Please stop an existing environment or try again in a few minutes."));
     }
 }

@@ -1,6 +1,8 @@
 package at.fhtw.ctfbackend.services;
 
+import at.fhtw.ctfbackend.controller.EnvironmentStartException;
 import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
+import org.springframework.http.HttpStatus;
 import at.fhtw.ctfbackend.repository.ChallengeInstanceRepository;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import at.fhtw.ctfbackend.services.EnvironmentService.StopResult;
@@ -105,5 +107,66 @@ class EnvironmentServiceAuthorizationTest {
         when(instanceRepo.findByInstanceId("missing")).thenReturn(Optional.empty());
 
         assertFalse(environmentService.stopEnvironment("userA", "missing").accessible());
+    }
+
+    // --- buildAndStartChallenge failure mapping ---
+
+    @Test
+    void toUserFriendly_dockerDaemonUnreachable_isUserSafeAnd503() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("Docker run failed with exit code 125:\nCannot connect to the Docker daemon at unix:///var/run/docker.sock"));
+
+        assertEquals("The environment service is temporarily unavailable. Please try again in a few minutes.",
+                ex.getUserMessage());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, ex.getStatus());
+    }
+
+    @Test
+    void toUserFriendly_missingDockerfile_tellsUserToContactAdmin() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("No Dockerfile found for challenge: test. Checked: docker/Dockerfile, ..."));
+
+        assertEquals("This challenge's environment is not set up correctly. Please contact an administrator.",
+                ex.getUserMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
+    }
+
+    @Test
+    void toUserFriendly_buildFailure_tellsUserItCouldNotBeBuilt() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("Docker build failed with exit code 1:\nRUN apt-get update failed"));
+
+        assertEquals("The environment could not be built or started. Please try again or contact an administrator.",
+                ex.getUserMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
+    }
+
+    @Test
+    void toUserFriendly_missingNetwork_tellsUserNetworkCouldNotBeCreated() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("Failed to ensure Docker network 'ctf-network': network ctf-network not found"));
+
+        assertEquals("The challenge network could not be created. Please contact an administrator.",
+                ex.getUserMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
+    }
+
+    @Test
+    void toUserFriendly_unknownFailure_fallsBackToGenericMessage() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("some unexpected internal error"));
+
+        assertEquals("Something went wrong while starting your environment. Please try again in a few minutes.",
+                ex.getUserMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
+    }
+
+    @Test
+    void toUserFriendly_neverLeaksTechnicalDetailInUserMessage() {
+        EnvironmentStartException ex = EnvironmentService.toUserFriendly(
+                new RuntimeException("Docker build failed with exit code 1:\n/opt/ctf/backend/challenges/secret/path"));
+
+        assertFalse(ex.getUserMessage().contains("/opt/ctf"));
+        assertFalse(ex.getUserMessage().contains("secret"));
     }
 }

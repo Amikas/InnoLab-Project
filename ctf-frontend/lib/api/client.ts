@@ -77,13 +77,14 @@ export class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      // The backend always puts user-safe text in `error`. Raw internals (paths,
+      // stack fragments) may live under `message`/`details`, so those are only
+      // ever surfaced for the whitelisted client-error statuses — never for 5xx.
       const serverMsg: string | undefined = errorData.error || errorData.message;
       if ([400, 401, 403, 404, 409, 429, 503].includes(response.status)) {
         throw new Error(serverMsg || "Authentication required");
       }
-      throw new Error(
-        `Request failed (${response.status})`,
-      );
+      throw new Error(errorData.error || `Request failed (${response.status})`);
     }
 
     if (response.status === 204) {

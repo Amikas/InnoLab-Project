@@ -28,6 +28,11 @@ public class DockerService {
     private static final Pattern IMAGE_NAME_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9._/-]{0,127}(:[a-zA-Z0-9._-]{0,127})?$");
     private static final Pattern CHALLENGE_ID_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9_.-]{0,62}$");
 
+    // Shared bridge network every challenge container joins. A missing network
+    // makes every `docker run` fail with "network ctf-network not found" — the
+    // backend creates it on demand so environments self-heal after a wipe.
+    private static final String NETWORK_NAME = "ctf-network";
+
     // Base path for challenges
     @Value("${challenges.base.path:./challenges}")
     private String challengesBasePath;
@@ -236,6 +241,10 @@ public class DockerService {
 
         logger.debug("Running container - Image: {}, Name: {}, SSH Port: {}", imageName, containerName, sshPort);
 
+        // Ensure the shared challenge network exists (creates it if missing).
+        // Prevents "network ctf-network not found" failures after a Docker
+        // network wipe or on a fresh host.
+        ensureNetworkExists();
 
         // Check for existing container with same name (race condition with cleanup)
         if (containerExists(containerName)) {
@@ -253,7 +262,7 @@ public class DockerService {
             List<String> command = new ArrayList<>(Arrays.asList(
                     "docker", "run", "-d",
                     "--name", containerName,
-                    "--network", "ctf-network",
+                    "--network", NETWORK_NAME,
                     "-e", "FLAG=" + flag,
                     "-e", "CTF_SSH_PASSWORD=" + ctfSshPassword,
                     "-p", sshPort + ":22"
@@ -300,6 +309,55 @@ public class DockerService {
             logger.error("runContainer failed: {}", LogSafe.sanitizeThrowable(e));
             throw new RuntimeException("Failed to run container: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Ensure the shared challenge network exists, creating it if missing.
+     * Docker's `docker network create` is idempotent enough for our purposes:
+     * we inspect first to avoid noisy "already exists" errors on every start.
+     */
+    private void ensureNetworkExists() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("docker", "network", "inspect", NETWORK_NAME);
+            Process process = pb.start();
+            boolean exists = process.waitFor() == 0;
+            if (exists) {
+                return;
+            }
+
+            logger.warn("Docker network '{}' missing, creating it", NETWORK_NAME);
+            ProcessBuilder create = new ProcessBuilder("docker", "network", "create", NETWORK_NAME);
+            create.redirectErrorStream(true);
+            Process createProc = create.start();
+            String createOutput = readProcessOutput(createProc);
+            if (createProc.waitFor() != 0) {
+                // Another process may have created it concurrently; verify.
+                ProcessBuilder recheck = new ProcessBuilder("docker", "network", "inspect", NETWORK_NAME);
+                if (recheck.start().waitFor() != 0) {
+                    // Include the CLI output so the underlying cause (e.g. a
+                    // stopped Docker daemon) is preserved for error mapping.
+                    throw new RuntimeException("Failed to create Docker network '" + NETWORK_NAME + "': " + createOutput);
+                }
+            }
+            logger.info("Docker network '{}' ready", NETWORK_NAME);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to ensure Docker network '" + NETWORK_NAME + "': " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Drain a process's merged output into a string. Used so CLI stderr
+     * (e.g. daemon errors) survives into exception messages for mapping.
+     */
+    private String readProcessOutput(Process process) throws IOException {
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+        }
+        return output.toString().trim();
     }
 
     private void setContainerSshPassword(String containerName) throws IOException, InterruptedException {
