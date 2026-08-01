@@ -7,6 +7,7 @@ import at.fhtw.ctfbackend.entity.ChallengeInstanceEntity;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import org.springframework.stereotype.Service;
 
+import at.fhtw.ctfbackend.logging.LogSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,12 @@ public class FlagService {
 
             return isValid;
         } catch (Exception e) {
-            logger.error("Flag validation failed: {}", e.getMessage(), e);
+            // SECURITY: never include the submitted flag value itself in any
+            // log message — it is the caller-controlled input that could be
+            // tuned to overflow or embed a server log trigger.
+            int submittedLen = (submittedFlag == null) ? -1 : submittedFlag.length();
+            logger.error("Flag validation failed: challengeId={} submittedLength={} cause={}",
+                    challengeId, submittedLen, LogSafe.sanitizeThrowable(e));
             return false;
         }
     }

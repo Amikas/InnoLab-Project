@@ -27,7 +27,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserService userService) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil,
+                                   UserService userService) {
         this.jwtUtil = jwtUtil;
         this.userService = userService;
     }
@@ -120,6 +121,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             username,
                             isAdmin
                         );
+
                     }
                 } catch (Exception ex) {
                     logger.debug(

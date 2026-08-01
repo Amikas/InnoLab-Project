@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback config for the CTF backend.
+
+  Goals (see docs/07-operations-runbook.md §12.5 and AGENTS.md §13):
+    * Only the explicit `dev` profile is DEBUG.
+    * Production default (no profile, or `prod`) is INFO for our code
+      and WARN for org.springframework.security — avoids leaking
+      GrantedAuthority decisions, JWT internals, etc.
+    * Every log line carries the requestId from RequestIdFilter's MDC.
+    * Lines emitted with Marker("AUDIT") also carry the marker name
+      so security events are easy to extract: `grep AUDIT`.
+
+-->
+<configuration>
+
+    <springProperty name="LOG_FILE" source="logging.file.name" defaultValue="ctf-backend.log"/>
+    <springProperty name="LOG_FILE_MAX_SIZE" source="logging.file.max-size" defaultValue="10MB"/>
+    <springProperty name="LOG_FILE_MAX_HISTORY" source="logging.file.max-history" defaultValue="7"/>
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [reqId=%X{requestId:--}] [%marker] - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Dev profile: permissive DEBUG for fast iteration. -->
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+        <logger name="at.fhtw.ctfbackend" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+    </springProfile>
+
+    <!--
+      Default / production: at.fhtw.ctfbackend = INFO; Spring Security = WARN
+      (avoid leaking auth internals). The `default` and any non-dev profile
+      land here. SECURITY: do NOT add `default` to the `dev` matcher above.
+    -->
+    <springProfile name="!dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+        <logger name="at.fhtw.ctfbackend" level="INFO"/>
+        <logger name="org.springframework.security" level="WARN"/>
+    </springProfile>
+
+</configuration>

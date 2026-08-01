@@ -9,11 +9,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -25,6 +28,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final List<String> EXCLUDED_PATHS = List.of(
             "/api/health"
     );
+
+    /** Marker so denials are easy to filter with `grep AUDIT`. */
+    private static final Marker AUDIT = MarkerFactory.getMarker("AUDIT");
+    private static final int MAX_AUDIT_KEYS = 10_000;
+    private final ConcurrentHashMap<String, Long> auditUntil = new ConcurrentHashMap<>();
 
     public RateLimitFilter(RateLimitConfig rateLimitConfig, JwtUtil jwtUtil) {
         this.rateLimitConfig = rateLimitConfig;
@@ -57,6 +65,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } else {
             long waitTimeSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000;
+            logRateLimitDenial(rateLimitKey, path, waitTimeSeconds);
             response.setHeader("Retry-After", String.valueOf(waitTimeSeconds));
             response.setStatus(429);
             response.setContentType("application/json");
@@ -80,5 +89,32 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private boolean isExcluded(String path) {
         return EXCLUDED_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private void logRateLimitDenial(String rateLimitKey, String path, long waitTimeSeconds) {
+        String auditKey = rateLimitKey + "|" + path;
+        long now = System.currentTimeMillis();
+        long until = now + Math.max(1, waitTimeSeconds) * 1_000L;
+        if (auditUntil.size() >= MAX_AUDIT_KEYS) {
+            auditUntil.entrySet().removeIf(entry -> entry.getValue() <= now);
+        }
+        if (auditUntil.size() >= MAX_AUDIT_KEYS && !auditUntil.containsKey(auditKey)) {
+            return;
+        }
+        // Compute the dedupe decision first (atomic map mutation), then log
+        // OUTSIDE the map operation so file/console I/O never runs while
+        // holding the ConcurrentHashMap bin lock on the denial hot path.
+        boolean[] shouldLog = {false};
+        auditUntil.compute(auditKey, (key, previousUntil) -> {
+            if (previousUntil == null || previousUntil <= now) {
+                shouldLog[0] = true;
+                return until;
+            }
+            return previousUntil;
+        });
+        if (shouldLog[0]) {
+            log.warn(AUDIT, "Rate limit exceeded key={} path={} retryAfterSec={}",
+                    rateLimitKey, path, waitTimeSeconds);
+        }
     }
 }

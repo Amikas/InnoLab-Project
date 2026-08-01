@@ -45,7 +45,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Set-Cookie", "X-RateLimit-Remaining", "Retry-After"));
+        configuration.setExposedHeaders(List.of("Set-Cookie", "X-RateLimit-Remaining", "Retry-After", "X-Request-Id"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -59,6 +59,19 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtUtil, userService);
     }
 
+    /**
+     * RequestIdFilter is NOT injected or registered here on purpose.
+     *
+     * <p>It is a {@code @Component} {@link org.springframework.web.filter.OncePerRequestFilter}
+     * annotated {@code @Order(Ordered.HIGHEST_PRECEDENCE)}, so Spring Boot
+     * auto-registers it as a global servlet filter with order
+     * {@code Integer.MIN_VALUE} \u2014 ahead of Spring Security's
+     * {@code SecurityFilterChain} which runs at
+     * {@code SecurityProperties.DEFAULT_FILTER_ORDER = -100}. The per-request
+     * attribute set by {@code OncePerRequestFilter} guarantees at-most-once
+     * execution even if Spring Security ever discovered it elsewhere. Single
+     * registration path = single source of truth.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -69,7 +82,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/login").permitAll()
-                        .requestMatchers("/api/health").permitAll() 
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/categories").permitAll()

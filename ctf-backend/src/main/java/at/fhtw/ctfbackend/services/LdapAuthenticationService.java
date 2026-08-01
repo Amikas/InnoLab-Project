@@ -1,5 +1,6 @@
 package at.fhtw.ctfbackend.services;
 
+import at.fhtw.ctfbackend.logging.LogSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +59,12 @@ public class LdapAuthenticationService {
             context = new InitialDirContext(env);
             return true;
         } catch (AuthenticationException ex) {
+            // Bad credentials are expected; do not bubble the bind DN or
+            // any inner message into logs. AuthenticationException.getMessage()
+            // is typically generic — passing through LogSafe.sanitizeThrowable
+            // keeps the LogSafe discipline uniform across the backend.
+            logger.warn("LDAP authentication failed for userId={}: {}",
+                    LogSafe.sanitizeIdentifier(userId), LogSafe.sanitizeThrowable(ex));
             return false;
         } catch (CommunicationException ex) {
             Throwable rootCause = ex.getRootCause() != null ? ex.getRootCause() : ex;
@@ -74,25 +81,36 @@ public class LdapAuthenticationService {
             } else if (exceptionName.equals("ConnectException") || causeMessage.contains("connection refused")) {
                 errorCode = LdapErrorCode.SERVER_UNREACHABLE;
             } else if (exceptionName.contains("SSL") || exceptionName.contains("Cert") || causeMessage.contains("handshake")) {
+                // SECURITY: still classified as TLS_ERROR so audit dashboards
+                // and the LdapInfrastructureException user-facing message
+                // remain accurate (this branch was lost in a prior
+                // accidental `} else else {` collapse and is being restored).
                 errorCode = LdapErrorCode.TLS_ERROR;
             } else {
                 errorCode = LdapErrorCode.UNKNOWN_INFRASTRUCTURE_ERROR;
             }
 
-            logger.error("LDAP communication error [{}] for userId={}: {}", errorCode, userId, exceptionName, ex);
+            // SECURITY: strip any FLAG=/PASSWORD=/etc. that the JNDI stack
+            // may have included in causeMessage when echoing bind context.
+            logger.error("LDAP communication error [{}] for userId={}: {}",
+                    errorCode, LogSafe.sanitizeIdentifier(userId),
+                    LogSafe.sanitizeMessage(causeMessage + " (" + exceptionName + ")"));
             throw new LdapInfrastructureException(errorCode, "LDAP infrastructure failure: " + exceptionName);
         } catch (ConfigurationException | NoInitialContextException ex) {
-            logger.error("LDAP configuration error for userId={}", userId, ex);
+            logger.error("LDAP configuration error for userId={}: {}",
+                    LogSafe.sanitizeIdentifier(userId), LogSafe.sanitizeThrowable(ex));
             throw new LdapInfrastructureException(LdapErrorCode.CONFIG_ERROR, "LDAP configuration error", ex);
         } catch (NamingException ex) {
-            logger.error("LDAP unexpected error for userId={}", userId, ex);
+            logger.error("LDAP unexpected error for userId={}: {}",
+                    LogSafe.sanitizeIdentifier(userId), LogSafe.sanitizeThrowable(ex));
             throw new LdapInfrastructureException(LdapErrorCode.UNKNOWN_INFRASTRUCTURE_ERROR, "LDAP unexpected error", ex);
         } finally {
             if (context != null) {
                 try {
                     context.close();
                 } catch (NamingException ex) {
-                    logger.debug("Failed to close LDAP context cleanly", ex);
+                    logger.debug("Failed to close LDAP context cleanly: {}",
+                            LogSafe.sanitizeThrowable(ex));
                 }
             }
         }

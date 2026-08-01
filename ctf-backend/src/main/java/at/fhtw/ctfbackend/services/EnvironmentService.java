@@ -429,7 +429,11 @@ public class EnvironmentService {
     // ===== UTILITY METHODS =====
 
     private String generateFlag(String challengeId) {
-        byte[] random = new byte[8];
+        // 16-byte entropy (32 hex chars) — comfortable margin over the
+        // minimum-vs-effort curve for unguessable per-user capture-the-flag
+        // tokens, while keeping the on-wire flag string short enough to
+        // not exceed typical env-var limits (32768 bytes inside Docker).
+        byte[] random = new byte[16];
         new SecureRandom().nextBytes(random);
         StringBuilder sb = new StringBuilder();
         for (byte b : random) sb.append(String.format("%02x", b));

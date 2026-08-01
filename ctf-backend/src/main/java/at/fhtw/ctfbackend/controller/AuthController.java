@@ -2,6 +2,7 @@ package at.fhtw.ctfbackend.controller;
 
 import at.fhtw.ctfbackend.dto.LoginCredentialsDto;
 import at.fhtw.ctfbackend.entity.UserEntity;
+import at.fhtw.ctfbackend.logging.LogSafe;
 import at.fhtw.ctfbackend.security.JwtUtil;
 import at.fhtw.ctfbackend.services.LdapAuthenticationService;
 import at.fhtw.ctfbackend.services.UserService;
@@ -11,24 +12,34 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     private final JwtUtil jwtUtil;
     private final LdapAuthenticationService ldapAuthenticationService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthController(
         JwtUtil jwtUtil,
         LdapAuthenticationService ldapAuthenticationService,
-        UserService userService
+        UserService userService,
+        ApplicationEventPublisher eventPublisher
     ) {
         this.jwtUtil = jwtUtil;
         this.ldapAuthenticationService = ldapAuthenticationService;
         this.userService = userService;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping("/api/login")
@@ -65,8 +76,6 @@ public class AuthController {
         user = userService.markSuccessfulLogin(user);
 
         boolean isAdmin = Boolean.TRUE.equals(user.getIsAdmin());
-
-        // Generate token with admin information
         String jwtToken = jwtUtil.generateToken(user.getUsername(), isAdmin);
 
         // Set HTTP-only cookie
@@ -84,6 +93,15 @@ public class AuthController {
         responseBody.put("email", user.getEffectiveEmail());
         responseBody.put("displayName", user.getDisplayName());
         responseBody.put("isAdmin", isAdmin);
+
+        try {
+            eventPublisher.publishEvent(new AuthenticationSuccessEvent(
+                new UsernamePasswordAuthenticationToken(user.getUsername(), null)
+            ));
+        } catch (RuntimeException ex) {
+            logger.warn("Failed to publish successful-login audit event: {}",
+                LogSafe.sanitizeThrowable(ex));
+        }
 
         return ResponseEntity.ok(responseBody);
     }
