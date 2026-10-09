@@ -24,4 +24,6 @@ public interface ChallengeInstanceRepository extends JpaRepository<ChallengeInst
     );
 
     Optional<ChallengeInstanceEntity> findByInstanceId(String instanceId);
+
+    List<ChallengeInstanceEntity> findByChallengeId(String challengeId);
 }

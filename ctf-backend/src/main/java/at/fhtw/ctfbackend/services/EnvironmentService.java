@@ -8,6 +8,7 @@ import at.fhtw.ctfbackend.repository.ChallengeInstanceRepository;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -400,6 +401,33 @@ public class EnvironmentService {
             logger.warn("cleanupAndReleasePort: PARTIAL CLEANUP for instance {} docker={} port={}", instanceId, dockerStopped, portReleased);
         } else {
             logger.info("cleanupAndReleasePort: SUCCESS for instance {}", instanceId);
+        }
+    }
+
+    /**
+     * Stop containers, release SSH ports, and delete instance rows belonging
+     * to a challenge that is being deleted. Best-effort on Docker: a failure
+     * there is logged but must not block the challenge deletion.
+     */
+    @Transactional
+    public void releaseInstancesForChallenge(String challengeId) {
+        List<ChallengeInstanceEntity> instances = instanceRepo.findByChallengeId(challengeId);
+        for (ChallengeInstanceEntity inst : instances) {
+            if (inst.getContainerName() != null && !inst.getContainerName().isBlank()) {
+                try {
+                    dockerService.stopContainer(inst.getContainerName());
+                } catch (Exception e) {
+                    logger.error("releaseInstancesForChallenge: Failed to stop container {}: {}",
+                            inst.getContainerName(), e.getMessage());
+                }
+            }
+            if ("RUNNING".equals(inst.getStatus()) && inst.getSshPort() != null) {
+                releasePort(inst.getSshPort());
+            }
+            instanceRepo.delete(inst);
+        }
+        if (!instances.isEmpty()) {
+            logger.info("Released {} instance(s) for deleted challenge {}", instances.size(), challengeId);
         }
     }
 

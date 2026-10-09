@@ -32,12 +32,7 @@ public class ChallengeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ChallengeDto> getChallenge(@PathVariable String id) {
-        try {
-            ChallengeDto challenge = challengeService.getChallengeById(id);
-            return ResponseEntity.ok(challenge);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(challengeService.getChallengeById(id));
     }
 
     @GetMapping("/{id}/download")
@@ -198,12 +193,8 @@ public class ChallengeController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteChallenge(@PathVariable String id) {
-        try {
-            challengeService.deleteChallenge(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+        challengeService.deleteChallenge(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/admin/stats")

@@ -31,10 +31,15 @@ public class Solve {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "challenge_id", nullable = false)
-    private ChallengeEntity challenge;
+    // Deliberately a plain string, not a JPA relationship: solve history
+    // must survive challenge deletion (the FK constraint was dropped).
+    @Column(name = "challenge_id", nullable = false)
+    private String challengeId;
 
+    // Snapshot of the challenge title, kept so history still renders after
+    // the challenge row is gone.
+    @Column(name = "challenge_title")
+    private String challengeTitle;
 
     @CreationTimestamp
     @Column(name = "solved_at", updatable = false)
@@ -46,7 +51,8 @@ public class Solve {
     public Solve(UserEntity user, ChallengeEntity challenge, Integer pointsEarned) {
         this.user = user;
         this.username = user.getUsername();
-        this.challenge = challenge;
+        this.challengeId = challenge.getId();
+        this.challengeTitle = challenge.getTitle();
         this.pointsEarned = pointsEarned;
     }
 }

@@ -325,8 +325,8 @@ public class SolveService {
         return new SolveResponse(
             solve.getId(),
             solve.getUsername(),
-            solve.getChallenge().getId(),
-            solve.getChallenge().getTitle(),
+            solve.getChallengeId(),
+            solve.getChallengeTitle(),
             solve.getSolvedAt(),
             solve.getPointsEarned()
         );

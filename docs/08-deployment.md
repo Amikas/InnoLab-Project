@@ -266,6 +266,31 @@ server {
 
 ---
 
+## Schema Migrations (manual)
+
+There is no Flyway/Liquibase. `spring.jpa.hibernate.ddl-auto=update` adds new
+columns and tables but never drops constraints, so constraint changes require a
+one-time SQL statement per existing database (dev + prod).
+
+### solves: keep history after challenge deletion
+
+`DELETE /api/challenges/{id}` preserves solve rows; `solves.challenge_id` is now
+a plain string (no FK) and `solves.challenge_title` snapshots the title. Run
+once per existing database, as the DB owner:
+
+```sql
+ALTER TABLE solves DROP CONSTRAINT IF EXISTS fkcgbhyraqpihb2c3avlcuugmw0;
+ALTER TABLE solves ADD COLUMN IF NOT EXISTS challenge_title varchar(255);
+UPDATE solves s SET challenge_title = c.title
+FROM challenges c
+WHERE s.challenge_id = c.id AND s.challenge_title IS NULL;
+```
+
+Fresh databases get the correct schema from Hibernate; the statements are
+idempotent and safe to re-run.
+
+---
+
 ## Important Deployment Contracts
 
 | Path | Owner | Requirement |

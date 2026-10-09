@@ -1,8 +1,11 @@
 package at.fhtw.ctfbackend.services;
 
+import at.fhtw.ctfbackend.controller.ChallengeNotFoundException;
 import at.fhtw.ctfbackend.entity.ChallengeEntity;
 import at.fhtw.ctfbackend.dto.ChallengeDto;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
+import at.fhtw.ctfbackend.repository.HintRevealRepository;
+import at.fhtw.ctfbackend.repository.SolveRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +26,21 @@ public class ChallengeService {
 
     private final ChallengeRepository repo;
     private final ChallengeFileStorageService fileStorageService;
+    private final SolveRepository solveRepository;
+    private final HintRevealRepository hintRevealRepository;
+    private final EnvironmentService environmentService;
     private final ObjectMapper objectMapper;
 
-    public ChallengeService(ChallengeRepository repo, ChallengeFileStorageService fileStorageService) {
+    public ChallengeService(ChallengeRepository repo,
+                            ChallengeFileStorageService fileStorageService,
+                            SolveRepository solveRepository,
+                            HintRevealRepository hintRevealRepository,
+                            EnvironmentService environmentService) {
         this.repo = repo;
         this.fileStorageService = fileStorageService;
+        this.solveRepository = solveRepository;
+        this.hintRevealRepository = hintRevealRepository;
+        this.environmentService = environmentService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -215,21 +228,31 @@ public class ChallengeService {
     }
 
     /**
-     * Delete a challenge by ID (with file cleanup)
+     * Delete a challenge by ID. Solve history is preserved (the challenge id
+     * is stored as a plain string and the title is snapshotted onto the rows);
+     * hint reveals and environment instances are removed with the challenge.
      */
     @Transactional
-    public void deleteChallenge(String id) throws IOException {
-        if (!repo.existsById(id)) {
-            throw new RuntimeException("Challenge not found: " + id);
-        }
+    public void deleteChallenge(String id) {
+        ChallengeEntity entity = repo.findById(id)
+                .orElseThrow(() -> new ChallengeNotFoundException(id));
 
-        // Delete challenge folder and files
-        ChallengeEntity entity = repo.findById(id).orElse(null);
-        if (entity != null && entity.getChallengeFolderPath() != null) {
+        // Keep historical solve rows readable after the challenge row is gone.
+        solveRepository.snapshotChallengeTitle(id, entity.getTitle());
+
+        hintRevealRepository.deleteByChallengeId(id);
+        environmentService.releaseInstancesForChallenge(id);
+        repo.delete(entity);
+
+        // Filesystem cleanup is not transactional. Run it last and swallow
+        // failures so a permissions error cannot roll back the DB delete and
+        // leave a live row with a deleted folder.
+        try {
             fileStorageService.deleteChallengeFolder(id);
+        } catch (Exception e) {
+            logger.error("Challenge {} deleted, but folder cleanup failed: {}", id, e.getMessage(), e);
         }
 
-        repo.deleteById(id);
         logger.info("Challenge deleted: {}", id);
     }
 
@@ -311,7 +334,7 @@ public class ChallengeService {
     public ChallengeDto getChallengeById(String id) {
         return repo.findById(id)
                 .map(this::toDto)
-                .orElseThrow(() -> new RuntimeException("Challenge not found: " + id));
+                .orElseThrow(() -> new ChallengeNotFoundException(id));
     }
 
     @Transactional(readOnly = true)

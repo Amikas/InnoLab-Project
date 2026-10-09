@@ -78,6 +78,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ChallengeNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleChallengeNotFound(ChallengeNotFoundException ex) {
+        logger.warn("Challenge not found: {}", LogSafe.sanitizeMessage(ex.getMessage()));
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Challenge not found");
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(AdminStateConflictException.class)
     // Messages from this exception are intentionally user-facing — keep them
     // sanitized at throw sites. We still log them so admins can audit.

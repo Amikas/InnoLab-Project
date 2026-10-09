@@ -14,7 +14,6 @@ erDiagram
     users ||--o{ challenge_instances : "user_id"
     users ||--o{ hint_reveals : "user_id"
     
-    challenges ||--o{ solves : "challenge_id"
     challenges ||--o{ challenge_instances : "challenge_id"
     challenges ||--o{ hint_reveals : "challenge_id"
     
@@ -72,14 +71,17 @@ Challenge definitions — static flags or instance-based.
 | `hints_json` | `TEXT` | | JSON array of hint strings |
 
 ### solves
-Tracks challenge completions.
+Tracks challenge completions. Survives challenge deletion: `challenge_id` is
+intentionally a plain string (no FK), and `challenge_title` snapshots the title
+so history stays readable after the challenge row is gone.
 
 | Column | Type | Constraints | Notes |
 |--------|------|-------------|-------|
 | `id` | `BIGSERIAL` | PK | |
 | `username` | `VARCHAR(255)` | NOT NULL | |
 | `user_id` | `BIGINT` | FK → users.id | |
-| `challenge_id` | `VARCHAR(255)` | NOT NULL, FK → challenges.id | |
+| `challenge_id` | `VARCHAR(255)` | NOT NULL | No FK — row kept when challenge is deleted |
+| `challenge_title` | `VARCHAR(255)` | | Title snapshot (set at solve time, backfilled on delete) |
 | `points_earned` | `INTEGER` | DEFAULT 0 | May be reduced by hint penalties |
 | `solved_at` | `TIMESTAMP` | DEFAULT NOW() | @CreationTimestamp |
 
