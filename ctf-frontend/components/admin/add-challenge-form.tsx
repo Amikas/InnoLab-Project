@@ -59,7 +59,7 @@ const challengeFormSchema = z.object({
       return val instanceof File;
     }, "Please select a valid file")
     .optional(),
-  requiresInstance: z.boolean().default(false),
+  requiresInstance: z.boolean(),
   hints: z.array(z.string()).optional(),
 });
 

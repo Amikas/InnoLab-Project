@@ -18,7 +18,8 @@ export interface UserProfile {
 
 // Import the real API functions
 import { getUserStatistics, getRecentSolves } from './solves'
-import { getUserInfo } from './auth'
+import { getAllChallenges } from './challenges'
+import { getUserInfo, type UserInfo } from './auth'
 
 /**
  * Get user profile with real data from the backend
@@ -33,7 +34,7 @@ export async function getUserProfile(): Promise<UserProfile> {
       // Continue with default values instead of throwing error
     }
     
-    const userInfo = userInfoResponse.success && userInfoResponse.data ? userInfoResponse.data : {}
+    const userInfo: Partial<UserInfo> = userInfoResponse.success && userInfoResponse.data ? userInfoResponse.data : {}
     
     // Get user statistics
     const statsResponse = await getUserStatistics()
@@ -46,11 +47,21 @@ export async function getUserProfile(): Promise<UserProfile> {
     
     // Get recent solves for activity feed
     const recentSolvesResponse = await getRecentSolves(4)
-    
+
+    // Backend solve responses do not include category; resolve it from the
+    // challenge list so the profile can still group/display recent activity.
+    let challengeCategoryById = new Map<string, string>()
+    try {
+        const challenges = await getAllChallenges()
+        challengeCategoryById = new Map(challenges.map((c) => [c.id, c.category]))
+    } catch (e) {
+        console.warn('Could not load challenges for solve category enrichment:', e)
+    }
+
     const recentSubmissions = recentSolvesResponse.success && recentSolvesResponse.data
       ? recentSolvesResponse.data.map(solve => ({
           challenge: solve.challengeTitle,
-          category: solve.category,
+          category: challengeCategoryById.get(solve.challengeId) || 'Unknown',
           solved: true,
           time: formatTimeAgo(solve.solvedAt)
         }))

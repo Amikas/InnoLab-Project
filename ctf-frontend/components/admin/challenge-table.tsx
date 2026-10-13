@@ -143,7 +143,7 @@ export default function ChallengeTable({ challenges }: ChallengeTableProps) {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm font-medium">
-                      {getTypeDisplay(challenge.requiresInstance)}
+                      {getTypeDisplay(!!challenge.requiresInstance)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

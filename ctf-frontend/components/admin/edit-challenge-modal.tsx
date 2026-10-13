@@ -28,7 +28,7 @@ const challengeFormSchema = z.object({
   file: z.instanceof(File).optional(),
 
   // Instance fields
-  requiresInstance: z.boolean().default(false),
+  requiresInstance: z.boolean(),
   dockerImageName: z.string().optional(),
 
   // Hints
@@ -77,9 +77,6 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
         flag: challenge.flag || "",
         requiresInstance: challenge.requiresInstance || false,
         dockerImageName: challenge.dockerImageName || "",
-        defaultSshPort: challenge.defaultSshPort || 30000,
-        defaultVscodePort: challenge.defaultVscodePort || 31000,
-        defaultDesktopPort: challenge.defaultDesktopPort || 32000,
       })
       setHints(challenge.hints || [])
     }

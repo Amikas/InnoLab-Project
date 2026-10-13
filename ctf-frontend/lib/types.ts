@@ -103,6 +103,7 @@ export interface CreateChallengeData {
     file: File
     dockerImageName?: string
     requiresInstance?: boolean
+    hints?: string[]
 }
 
 // Environment types for instance-based challenges

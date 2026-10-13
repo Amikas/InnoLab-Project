@@ -141,7 +141,7 @@ export class ApiClient {
     const blob = await response.blob();
     const filename = extractFilenameFromHeaders(response.headers);
 
-    return { blob, filename };
+    return { blob, filename: filename ?? undefined };
   }
 
   // Convenience method for downloading files with automatic trigger
@@ -168,7 +168,7 @@ export class ApiClient {
   }
 
   // Convenience methods
-  async post<T>(endpoint: string, data: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(data),

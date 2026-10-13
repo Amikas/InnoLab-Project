@@ -53,8 +53,8 @@ export async function createChallenge(
     formData.append("category", challengeData.category);
     formData.append("difficulty", challengeData.difficulty);
     formData.append("points", challengeData.points.toString());
-    formData.append("flag", challengeData.flag);
-    formData.append("file", challengeData.file);
+    if (challengeData.flag) formData.append("flag", challengeData.flag);
+    if (challengeData.file) formData.append("file", challengeData.file);
 
     // Append instance fields if provided
     if (challengeData.dockerImageName) {

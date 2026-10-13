@@ -30,7 +30,7 @@ export interface AdminUserUpdate {
 
 export async function getAdminStats(): Promise<AdminStats> {
     try {
-        const backendStats = await apiClient.get('/api/challenges/admin/stats');
+        const backendStats = await apiClient.get<Record<string, unknown>>('/api/challenges/admin/stats');
 
         return {
             totalChallenges: typeof backendStats.totalChallenges === 'number' ? backendStats.totalChallenges : 0,

@@ -2,7 +2,6 @@
 import { apiClient } from './client'
 import type { ApiResult } from '@/lib/types'
 
-// Type definitions for solve tracking
 export interface Solve {
     id: number
     username: string
@@ -10,8 +9,6 @@ export interface Solve {
     challengeTitle: string
     pointsEarned: number
     solvedAt: string
-    category: string
-    difficulty: string
 }
 
 export interface SolveStatistics {
@@ -37,223 +34,119 @@ export interface LeaderboardEntry {
     solveCount: number
 }
 
-/**
- * Get all challenges solved by the authenticated user
- */
+function clampLimit(limit: number): number {
+    const n = Number.isFinite(limit) ? Math.trunc(limit) : 10
+    return Math.min(100, Math.max(1, n))
+}
+
 export async function getMySolves(): Promise<ApiResult<Solve[]>> {
     try {
-        const response = await apiClient.get('/api/solves/me')
-        return {
-            success: true,
-            data: response.data
-        }
+        const response = await apiClient.get<Solve[]>('/api/solves/me')
+        return { success: true, data: Array.isArray(response) ? response : [] }
     } catch (error) {
         console.error('Error fetching user solves:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch solves'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch solves' }
     }
 }
 
-/**
- * Check if the authenticated user has solved a specific challenge
- */
 export async function checkIfSolved(challengeId: string): Promise<ApiResult<{ solved: boolean }>> {
     try {
-        const response = await apiClient.get(`/api/solves/check/${challengeId}`)
-        return {
-            success: true,
-            data: response.data
-        }
+        const response = await apiClient.get<{ solved: boolean }>(`/api/solves/check/${challengeId}`)
+        return { success: true, data: response && typeof response.solved === 'boolean' ? response : { solved: false } }
     } catch (error) {
         console.error('Error checking solve status:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to check solve status'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to check solve status' }
     }
 }
 
-/**
- * Get the number of users who solved a specific challenge
- */
 export async function getSolveCountForChallenge(challengeId: string): Promise<ApiResult<{ count: number }>> {
     try {
-        const response = await apiClient.get(`/api/solves/challenge/${challengeId}/count`)
-        return {
-            success: true,
-            data: response.data
-        }
+        const response = await apiClient.get<{ count: number }>(`/api/solves/challenge/${challengeId}/count`)
+        return { success: true, data: response && typeof response.count === 'number' ? response : { count: 0 } }
     } catch (error) {
         console.error('Error fetching solve count:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch solve count'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch solve count' }
     }
 }
 
-/**
- * Get recent solves (for activity feed)
- */
 export async function getRecentSolves(limit: number = 10): Promise<ApiResult<Solve[]>> {
     try {
-        const response = await apiClient.get('/api/solves/recent', {
-            params: { limit }
-        })
-        return {
-            success: true,
-            data: response.data
-        }
+        const response = await apiClient.get<Solve[]>(`/api/solves/recent?limit=${clampLimit(limit)}`)
+        return { success: true, data: Array.isArray(response) ? response : [] }
     } catch (error) {
         console.error('Error fetching recent solves:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch recent solves'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch recent solves' }
     }
 }
 
-/**
- * Get top solvers by number of challenges solved
- */
 export async function getTopSolvers(limit: number = 10): Promise<ApiResult<LeaderboardEntry[]>> {
     try {
-        const response = await apiClient.get('/api/solves/top-solvers', {
-            params: { limit }
-        })
-        return {
-            success: true,
-            data: Object.entries(response.data).map(([username, solveCount]) => ({
-                username,
-                solveCount: solveCount as number
-            }))
-        }
+        const response = await apiClient.get<Record<string, number>>(`/api/solves/top-solvers?limit=${clampLimit(limit)}`)
+        return { success: true, data: Object.entries(response ?? {}).map(([username, solveCount]) => ({ username, solveCount: Number(solveCount) || 0 })) }
     } catch (error) {
         console.error('Error fetching top solvers:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch top solvers'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch top solvers' }
     }
 }
 
-/**
- * Get most solved challenges
- */
 export async function getMostSolvedChallenges(limit: number = 10): Promise<ApiResult<{ challengeId: string; solveCount: number }[]>> {
     try {
-        const response = await apiClient.get('/api/solves/most-solved', {
-            params: { limit }
-        })
-        return {
-            success: true,
-            data: Object.entries(response.data).map(([challengeId, solveCount]) => ({
-                challengeId,
-                solveCount: solveCount as number
-            }))
-        }
+        const response = await apiClient.get<Record<string, number>>(`/api/solves/most-solved?limit=${clampLimit(limit)}`)
+        return { success: true, data: Object.entries(response ?? {}).map(([challengeId, solveCount]) => ({ challengeId, solveCount: Number(solveCount) || 0 })) }
     } catch (error) {
         console.error('Error fetching most solved challenges:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch most solved challenges'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch most solved challenges' }
     }
 }
 
-/**
- * Get statistics for the authenticated user
- */
 export async function getUserStatistics(): Promise<ApiResult<SolveStatistics>> {
     try {
-        const response = await apiClient.get('/api/solves/me/stats')
-        const data = response.data || {}
-
-        // Validate that we have the required data
-        if (!data || typeof data !== 'object') {
-            console.error('Invalid user statistics data received:', data)
-            return {
-                success: false,
-                error: 'Invalid data format received from server'
-            }
-        }
-
+        const response = await apiClient.get<Record<string, unknown>>('/api/solves/me/stats')
+        const data = (response && typeof response === 'object' ? response : {}) as Record<string, unknown>
         return {
             success: true,
             data: {
-                totalSolves: data.totalSolves || 0,
-                totalPoints: data.totalPoints || 0,
-                categoryDistribution: data.categoryDistribution || {},
-                difficultyDistribution: data.difficultyDistribution || {},
-                challengesSolved: data.totalSolves || 0 // Alias for consistency
+                totalSolves: Number(data.totalSolves) || 0,
+                totalPoints: Number(data.totalPoints) || 0,
+                categoryDistribution: (data.categoryDistribution && typeof data.categoryDistribution === 'object' ? data.categoryDistribution as Record<string, number> : {}),
+                difficultyDistribution: (data.difficultyDistribution && typeof data.difficultyDistribution === 'object' ? data.difficultyDistribution as Record<string, number> : {}),
+                challengesSolved: Number(data.totalSolves) || 0
             }
         }
     } catch (error) {
         console.error('Error fetching user statistics:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch user statistics'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch user statistics' }
     }
 }
 
-/**
- * Get statistics for a specific challenge
- */
 export async function getChallengeStatistics(challengeId: string): Promise<ApiResult<ChallengeStatistics>> {
     try {
-        const response = await apiClient.get(`/api/solves/challenge/${challengeId}/stats`)
-
-        // The data is directly on response, not response.data
-        const data = response || {}
-
-        // Validate that we have the required data
-        if (!data || typeof data !== 'object') {
-            console.error('Invalid challenge statistics data received:', data)
-            return {
-                success: false,
-                error: 'Invalid data format received from server'
-            }
-        }
-
+        const response = await apiClient.get<Record<string, unknown>>(`/api/solves/challenge/${challengeId}/stats`)
+        const data = (response && typeof response === 'object' ? response : {}) as Record<string, unknown>
         return {
             success: true,
             data: {
-                challengeId: data.challengeId ?? '',
-                challengeTitle: data.challengeTitle ?? '',
-                solveCount: data.solveCount ?? 0,
-                category: data.category ?? '',
-                difficulty: data.difficulty ?? '',
-                points: data.points ?? 0,
-                solveRate: data.solveRate ?? 'N/A'
+                challengeId: String(data.challengeId ?? challengeId),
+                challengeTitle: String(data.challengeTitle ?? ''),
+                solveCount: Number(data.solveCount) || 0,
+                category: String(data.category ?? ''),
+                difficulty: String(data.difficulty ?? ''),
+                points: Number(data.points) || 0,
+                solveRate: String(data.solveRate ?? 'N/A')
             }
         }
     } catch (error) {
         console.error('Error fetching challenge statistics:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch challenge statistics'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch challenge statistics' }
     }
 }
 
-/**
- * Get total number of solves in the system
- */
 export async function getTotalSolveCount(): Promise<ApiResult<{ totalSolves: number }>> {
     try {
-        const response = await apiClient.get('/api/solves/total-count')
-        return {
-            success: true,
-            data: response.data
-        }
+        const response = await apiClient.get<{ totalSolves: number }>('/api/solves/total-count')
+        return { success: true, data: response && typeof response.totalSolves === 'number' ? response : { totalSolves: 0 } }
     } catch (error) {
         console.error('Error fetching total solve count:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch total solve count'
-        }
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch total solve count' }
     }
 }
