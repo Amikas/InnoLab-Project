@@ -28,7 +28,6 @@ INSERT INTO file_entity (id, file_name, content) VALUES
 -- =====================================================================
 INSERT INTO challenges (id, title, description, category, difficulty, points, download_zip, flag) VALUES
                                                                                                       ('web-101', 'Intro to Web Exploitation', 'Basic XSS challenge for beginners.', 'web', 'EASY', 100, decode('504b0304', 'hex'), 'flag{leet_xss}'),
-                                                                                                      ('rev-201', 'Reverse Engineering Basics', 'Analyze a binary and recover the hidden flag.', 'crypto', 'MEDIUM', 200, decode('504b0304', 'hex'), 'flag{reverse_master}'),
                                                                                                       ('crypto-rsa-ct', 'RSA: Common Modulus', 'Two ciphertexts, one modulus, different exponents. Recover the message.', 'crypto', 'HARD', 400, decode('504b0304', 'hex'), 'CTF{BEZOUT_TO_THE_RESQUE}');
 
 -- =====================================================================
@@ -36,5 +35,4 @@ INSERT INTO challenges (id, title, description, category, difficulty, points, do
 -- =====================================================================
 INSERT INTO solves (username, challenge_id, points_earned) VALUES
                                                                ('alice', 'web-101', 100),
-                                                               ('bob', 'web-101', 100),
-                                                               ('alice', 'rev-201', 200);
+                                                               ('bob', 'web-101', 100);
