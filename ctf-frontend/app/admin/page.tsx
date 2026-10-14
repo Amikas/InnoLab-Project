@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Shield, Users, Flag, TrendingUp, BookOpen, Zap } from "lucide-react"
+import { Shield, Users, Flag, TrendingUp, BookOpen, Zap, ArrowDownUp } from "lucide-react"
 import { getAdminStats, type AdminStats } from "@/lib/api/admin"
 import { useAuth } from '@/lib/hooks/use-auth'
 import { useRouter } from 'next/navigation'
@@ -124,7 +124,14 @@ export default function AdminDashboardPage() {
               {t('admin.welcome', { user: auth.user })}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/import-export"
+              className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium cursor-pointer"
+            >
+              <ArrowDownUp className="w-5 h-5" />
+              Import / export
+            </Link>
             <Link
               href="/admin/courses"
               className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium cursor-pointer"
