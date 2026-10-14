@@ -20,6 +20,10 @@ public class ModuleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Stable identity used by content packages; unlike the database ID it travels between environments. */
+    @Column(length = 36, unique = true)
+    private String transferKey;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private CourseEntity course;
@@ -53,6 +57,7 @@ public class ModuleEntity {
 
     @PrePersist
     protected void onCreate() {
+        if (transferKey == null) transferKey = java.util.UUID.randomUUID().toString();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

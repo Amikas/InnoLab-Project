@@ -32,6 +32,10 @@ public class ChallengeEntity {
     private boolean requiresInstance;
     private String flag;
 
+    /** Changes when imported Docker content changes, forcing the destination to build a fresh image. */
+    @Column(length = 36)
+    private String imageRevision;
+
 
 
     // Store file metadata as JSON

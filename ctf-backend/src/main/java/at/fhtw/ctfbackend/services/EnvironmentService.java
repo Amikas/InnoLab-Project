@@ -108,11 +108,11 @@ public class EnvironmentService {
         try {
             instanceRepo.save(inst);
 
-            // 6. Generate image name from challenge ID and start Docker container with real FLAG
-            String imageName = "ctf-" + challengeId.toLowerCase().replaceAll("[^a-z0-9-]", "");
-            dockerService.runContainer(
+            // Build on demand so an imported content revision gets its own image.
+            dockerService.buildAndRun(
+                    challengeId,
+                    challenge.getImageRevision(),
                     containerName,
-                    imageName,
                     realFlag,
                     sshPort
             );
@@ -248,6 +248,7 @@ public class EnvironmentService {
             // Build and run the challenge
             dockerService.buildAndRun(
                     challengeId,
+                    challenge.getImageRevision(),
                     containerName,
                     realFlag,
                     sshPort

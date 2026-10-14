@@ -147,6 +147,14 @@ public class DockerService {
             String containerName,
             String flag,
             int sshPort) {
+        return buildAndRun(challengeId, null, containerName, flag, sshPort);
+    }
+
+    public String buildAndRun(String challengeId,
+            String imageRevision,
+            String containerName,
+            String flag,
+            int sshPort) {
 
         validateChallengeId(challengeId);
 
@@ -160,7 +168,8 @@ public class DockerService {
         }
 
         // Build image
-        String imageTag = "ctf-" + challengeId.toLowerCase().replaceAll("[^a-z0-9-]", "");
+        String imageTag = "ctf-" + challengeId.toLowerCase().replaceAll("[^a-z0-9-]", "")
+                + (imageRevision == null || imageRevision.isBlank() ? "" : "-" + imageRevision.replaceAll("[^a-zA-Z0-9]", ""));
         if (!imageExists(imageTag)) {
             logger.info(" Building image: {}", imageTag);
             buildImage(challengeId, imageTag);
