@@ -69,7 +69,9 @@ public class CategoryService {
 
         String id = jsonNode.get("id").asText();
         String name = jsonNode.get("name").asText();
+        String nameDe = jsonNode.has("nameDe") ? jsonNode.get("nameDe").asText("") : null;
         String summary = jsonNode.has("summary") ? jsonNode.get("summary").asText("") : "";
+        String summaryDe = jsonNode.has("summaryDe") ? jsonNode.get("summaryDe").asText("") : null;
         String fileUrl = jsonNode.has("fileUrl") ? jsonNode.get("fileUrl").asText("") : "";
 
         if (categoryRepository.existsById(id)) {
@@ -77,6 +79,8 @@ public class CategoryService {
         }
 
         CategoryEntity categoryEntity = new CategoryEntity(id, name, summary, fileUrl);
+        categoryEntity.setNameDe(nameDe);
+        categoryEntity.setSummaryDe(summaryDe);
 
         try {
             categoryRepository.save(categoryEntity);
@@ -102,11 +106,14 @@ public class CategoryService {
     }
 
     private CategoryDto toDto(CategoryEntity entity) {
-        return new CategoryDto(
+        CategoryDto dto = new CategoryDto(
                 entity.getId(),
                 entity.getName(),
                 entity.getSummary(),
                 entity.getFileUrl()
         );
+        dto.setNameDe(entity.getNameDe());
+        dto.setSummaryDe(entity.getSummaryDe());
+        return dto;
     }
 }

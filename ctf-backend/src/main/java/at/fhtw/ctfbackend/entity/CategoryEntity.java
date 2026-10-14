@@ -22,6 +22,21 @@ public class CategoryEntity {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    /** German variants (optional, English is the fallback). */
+    @Column(length = 2000)
+    private String nameDe;
+
+    @Column(columnDefinition = "TEXT")
+    private String summaryDe;
+
     @Column(name = "file_url", length = 2000)
     private String fileUrl;
+
+    /** Backwards-compatible 4-arg constructor (pre-i18n call sites). */
+    public CategoryEntity(String id, String name, String summary, String fileUrl) {
+        this.id = id;
+        this.name = name;
+        this.summary = summary;
+        this.fileUrl = fileUrl;
+    }
 }

@@ -50,7 +50,9 @@ public class CourseAdminController {
         }
 
         existing.setTitle(courseDto.getTitle());
+        existing.setTitleDe(courseDto.getTitleDe());
         existing.setDescription(courseDto.getDescription());
+        existing.setDescriptionDe(courseDto.getDescriptionDe());
         existing.setSlug(courseDto.getSlug());
         existing.setDifficulty(courseDto.getDifficulty());
         existing.setEstimatedMinutes(courseDto.getEstimatedMinutes());
@@ -85,7 +87,9 @@ public class CourseAdminController {
         return CourseDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
+                .titleDe(entity.getTitleDe())
                 .description(entity.getDescription())
+                .descriptionDe(entity.getDescriptionDe())
                 .slug(entity.getSlug())
                 .difficulty(entity.getDifficulty())
                 .estimatedMinutes(entity.getEstimatedMinutes())
@@ -97,7 +101,9 @@ public class CourseAdminController {
     private CourseEntity toEntity(CourseDto dto) {
         return CourseEntity.builder()
                 .title(dto.getTitle())
+                .titleDe(dto.getTitleDe())
                 .description(dto.getDescription())
+                .descriptionDe(dto.getDescriptionDe())
                 .slug(dto.getSlug())
                 .difficulty(dto.getDifficulty())
                 .estimatedMinutes(dto.getEstimatedMinutes())

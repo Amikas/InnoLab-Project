@@ -17,6 +17,10 @@ public class ChallengeEntity {
     private String title;
     @Column(columnDefinition = "TEXT")
     private String description;
+    /** German (de) variants. Nullable for backwards compatibility; English is the fallback. */
+    private String titleDe;
+    @Column(columnDefinition = "TEXT")
+    private String descriptionDe;
     private String category;
     private String difficulty;
     private Integer points;
@@ -40,6 +44,10 @@ public class ChallengeEntity {
     // Store hints as JSON array
     @Column(columnDefinition = "TEXT")
     private String hintsJson;
+
+    /** German hints as JSON array (optional, falls back to hintsJson). */
+    @Column(columnDefinition = "TEXT")
+    private String hintsJsonDe;
 
     public byte[] getDownload() {
         return downloadZip;

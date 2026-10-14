@@ -1,9 +1,13 @@
 import Link from "next/link"
 import { Trophy, Award, Zap, Clock } from "lucide-react"
 import { getUserProfile } from "@/lib/api/profile"
+import { getLocale } from "@/lib/i18n/get-locale"
+import { getDictionary } from "@/lib/i18n/dictionaries"
 
 export default async function ProfilePage() {
   const profile = await getUserProfile()
+  const locale = await getLocale()
+  const dict = getDictionary(locale)
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -20,7 +24,7 @@ export default async function ProfilePage() {
             </div>
           </div>
           <p className="text-muted-foreground text-sm">
-            Member since {profile.memberSince} • Rank: {profile.rank}
+            {dict.profile.memberSince} {profile.memberSince} • {dict.profile.rank}: {profile.rank}
           </p>
         </div>
 
@@ -28,29 +32,29 @@ export default async function ProfilePage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-card border border-border rounded-lg p-4">
             <Trophy className="w-5 h-5 text-primary mb-2" />
-            <p className="text-muted-foreground text-xs mb-1">Points</p>
+            <p className="text-muted-foreground text-xs mb-1">{dict.profile.points}</p>
             <p className="text-xl font-bold">{profile.totalPoints}</p>
           </div>
           <div className="bg-card border border-border rounded-lg p-4">
             <Award className="w-5 h-5 text-primary mb-2" />
-            <p className="text-muted-foreground text-xs mb-1">Solved</p>
+            <p className="text-muted-foreground text-xs mb-1">{dict.profile.solved}</p>
             <p className="text-xl font-bold">{profile.challengesSolved}</p>
           </div>
           <div className="bg-card border border-border rounded-lg p-4">
             <Zap className="w-5 h-5 text-primary mb-2" />
-            <p className="text-muted-foreground text-xs mb-1">Streak</p>
-            <p className="text-xl font-bold">{profile.streak}d</p>
+            <p className="text-muted-foreground text-xs mb-1">{dict.profile.streak}</p>
+            <p className="text-xl font-bold">{profile.streak}{dict.profile.days}</p>
           </div>
           <div className="bg-card border border-border rounded-lg p-4">
             <Clock className="w-5 h-5 text-primary mb-2" />
-            <p className="text-muted-foreground text-xs mb-1">Time</p>
+            <p className="text-muted-foreground text-xs mb-1">{dict.profile.time}</p>
             <p className="text-xl font-bold">{profile.timeSpent}</p>
           </div>
         </div>
 
         {/* Recent Activity */}
         <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-bold mb-4">Recent Submissions</h2>
+          <h2 className="text-lg font-bold mb-4">{dict.profile.recent}</h2>
           <div className="space-y-2">
             {profile.recentSubmissions.map((sub, idx) => (
               <div key={idx} className="flex justify-between items-center p-3 bg-background rounded text-sm">
@@ -66,7 +70,7 @@ export default async function ProfilePage() {
             ))}
           </div>
           <Link href="/challenges" className="text-primary text-sm mt-4 inline-block hover:underline">
-            View all →
+            {dict.profile.viewAll} →
           </Link>
         </div>
       </div>

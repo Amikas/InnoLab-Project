@@ -67,6 +67,13 @@ export class ApiClient {
       headers.set("Content-Type", "application/json");
     }
 
+    // Forward the current UI locale so the backend can return
+    // localized content (title/description) with English fallback.
+    if (!headers.has("Accept-Language") && typeof navigator !== "undefined") {
+      const lang = navigator.language?.split("-")[0];
+      if (lang === "de" || lang === "en") headers.set("Accept-Language", lang);
+    }
+
     const config: RequestInit = {
       ...options,
       headers,

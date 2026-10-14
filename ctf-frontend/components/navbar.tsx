@@ -5,21 +5,24 @@ import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { User, Menu, X, Flag, Shield } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
+import LanguageSwitcher from "@/components/language-switcher"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { useTranslation } from "react-i18next"
 
 export default function Navbar() {
+  const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { auth, logout } = useAuth()
 
   const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/challenges", label: "Challenges" },
-    { href: "/courses", label: "Courses" },
-    { href: "/scoreboard", label: "Scoreboard" },
-    { href: "/about", label: "About" },
-    { href: "/help", label: "Help" },
+    { href: "/", label: t("nav.home") },
+    { href: "/challenges", label: t("nav.challenges") },
+    { href: "/courses", label: t("nav.courses") },
+    { href: "/scoreboard", label: t("nav.scoreboard") },
+    { href: "/about", label: t("nav.about") },
+    { href: "/help", label: t("nav.help") },
   ]
 
   const isActive = (href: string) => pathname === href
@@ -41,7 +44,7 @@ export default function Navbar() {
             className="flex items-center gap-2 text-xl font-bold text-primary hover:opacity-80 transition-opacity"
           >
             <Flag className="w-6 h-6" />
-            <span>CTF Platform</span>
+            <span>{t("nav.platformName")}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -63,6 +66,7 @@ export default function Navbar() {
 
           {/* Auth Buttons */}
           <div className="cursor-pointer hidden md:flex items-center gap-4">
+            <LanguageSwitcher />
             <div className=" hidden md:flex items-center mr-2">
               <ThemeToggle />
             </div>
@@ -70,7 +74,7 @@ export default function Navbar() {
               <Link
                 href="/admin"
                 className="px-4 py-2 text-muted-foreground hover:text-primary transition-colors"
-                title="Admin Dashboard"
+                title={t("nav.adminDashboard")}
               >
                 <Shield className="w-5 h-5" />
               </Link>
@@ -87,7 +91,7 @@ export default function Navbar() {
                   onClick={handleLogout}
                   className="px-4 py-2 cursor-pointer bg-destructive text-white dark:text-foreground rounded-lg font-medium hover:opacity-80 transition-opacity"
                 >
-                  Logout
+                  {t("nav.logout")}
                 </button>
               </>
             ) : (
@@ -96,7 +100,7 @@ export default function Navbar() {
                   href="/login"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
                 >
-                  Login
+                  {t("nav.login")}
                 </Link>
               </>
             )}
@@ -129,8 +133,9 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="cursor-pointer pt-4 border-t border-border space-y-3">
-              <div className="px-2">
+              <div className="px-2 flex items-center gap-3">
                 <ThemeToggle />
+                <LanguageSwitcher />
               </div>
               {auth.isAuthenticated ? (
                 <>
@@ -145,7 +150,7 @@ export default function Navbar() {
                     onClick={handleLogout}
                     className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
                   >
-                    Logout
+                    {t("nav.logout")}
                   </button>
                 </>
               ) : (
@@ -155,7 +160,7 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="block w-full px-4 py-2 text-center bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
                   >
-                    Login
+                    {t("nav.login")}
                   </Link>
                 </>
               )}

@@ -8,7 +8,9 @@ import lombok.Setter;
 public class ChallengeDto {
     private String id;
     private String title;
+    private String titleDe;
     private String description;
+    private String descriptionDe;
     private String category;
     private String difficulty;
     private Integer points;
@@ -17,6 +19,7 @@ public class ChallengeDto {
     private Boolean solved = false;
     private Boolean requiresInstance = false;
     private String[] hints;
+    private String[] hintsDe;
     private String challengeFolderPath;
     private String dockerFilesJson;
 

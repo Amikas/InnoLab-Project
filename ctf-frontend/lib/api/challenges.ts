@@ -49,7 +49,9 @@ export async function createChallenge(
 
     // Append basic fields
     formData.append("title", challengeData.title);
+    if (challengeData.titleDe) formData.append("titleDe", challengeData.titleDe);
     formData.append("description", challengeData.description);
+    if (challengeData.descriptionDe) formData.append("descriptionDe", challengeData.descriptionDe);
     formData.append("category", challengeData.category);
     formData.append("difficulty", challengeData.difficulty);
     formData.append("points", challengeData.points.toString());
@@ -86,8 +88,11 @@ export async function updateChallenge(
 
     // Append only provided fields
     if (challengeData.title) formData.append("title", challengeData.title);
+    if (challengeData.titleDe) formData.append("titleDe", challengeData.titleDe);
     if (challengeData.description)
       formData.append("description", challengeData.description);
+    if (challengeData.descriptionDe)
+      formData.append("descriptionDe", challengeData.descriptionDe);
     if (challengeData.category)
       formData.append("category", challengeData.category);
     if (challengeData.difficulty)

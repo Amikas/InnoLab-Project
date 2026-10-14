@@ -65,15 +65,22 @@ public class LessonAdminController {
         }
 
         existing.setTitle(lessonDto.getTitle());
+        existing.setTitleDe(lessonDto.getTitleDe());
         existing.setContent(lessonDto.getContent());
+        existing.setContentDe(lessonDto.getContentDe());
         existing.setDetailedExplanation(lessonDto.getDetailedExplanation());
+        existing.setDetailedExplanationDe(lessonDto.getDetailedExplanationDe());
         existing.setVideoUrl(lessonDto.getVideoUrl());
         existing.setOrderIndex(lessonDto.getOrderIndex() != null ? lessonDto.getOrderIndex() : 0);
         existing.setChallengeIds(lessonDto.getChallengeIds());
         existing.setCodeExamplesJson(lessonDto.getCodeExamplesJson());
         existing.setRealWorldIncidents(lessonDto.getRealWorldIncidents());
+        if (lessonDto.getRealWorldIncidentsDe() != null)
+            existing.setRealWorldIncidentsDe(lessonDto.getRealWorldIncidentsDe());
         existing.setExternalReferences(lessonDto.getExternalReferences());
         existing.setKeyTakeaways(lessonDto.getKeyTakeaways());
+        if (lessonDto.getKeyTakeawaysDe() != null)
+            existing.setKeyTakeawaysDe(lessonDto.getKeyTakeawaysDe());
 
         if (lessonDto.getModuleId() != null) {
             ModuleEntity module = moduleRepository.findById(lessonDto.getModuleId()).orElse(null);
@@ -118,30 +125,40 @@ public class LessonAdminController {
                 .id(entity.getId())
                 .moduleId(entity.getModule().getId())
                 .title(entity.getTitle())
+                .titleDe(entity.getTitleDe())
                 .content(entity.getContent())
+                .contentDe(entity.getContentDe())
                 .detailedExplanation(entity.getDetailedExplanation())
+                .detailedExplanationDe(entity.getDetailedExplanationDe())
                 .videoUrl(entity.getVideoUrl())
                 .orderIndex(entity.getOrderIndex())
                 .challengeIds(entity.getChallengeIds())
                 .codeExamplesJson(entity.getCodeExamplesJson())
                 .realWorldIncidents(entity.getRealWorldIncidents())
+                .realWorldIncidentsDe(entity.getRealWorldIncidentsDe())
                 .externalReferences(entity.getExternalReferences())
                 .keyTakeaways(entity.getKeyTakeaways())
+                .keyTakeawaysDe(entity.getKeyTakeawaysDe())
                 .build();
     }
 
     private LessonEntity toEntity(LessonDto dto) {
         return LessonEntity.builder()
                 .title(dto.getTitle())
+                .titleDe(dto.getTitleDe())
                 .content(dto.getContent())
+                .contentDe(dto.getContentDe())
                 .detailedExplanation(dto.getDetailedExplanation())
+                .detailedExplanationDe(dto.getDetailedExplanationDe())
                 .videoUrl(dto.getVideoUrl())
                 .orderIndex(dto.getOrderIndex() != null ? dto.getOrderIndex() : 0)
                 .challengeIds(dto.getChallengeIds())
                 .codeExamplesJson(dto.getCodeExamplesJson())
                 .realWorldIncidents(dto.getRealWorldIncidents())
+                .realWorldIncidentsDe(dto.getRealWorldIncidentsDe())
                 .externalReferences(dto.getExternalReferences())
                 .keyTakeaways(dto.getKeyTakeaways())
+                .keyTakeawaysDe(dto.getKeyTakeawaysDe())
                 .build();
     }
 }

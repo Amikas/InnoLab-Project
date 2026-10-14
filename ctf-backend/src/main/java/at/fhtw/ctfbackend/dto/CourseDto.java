@@ -14,7 +14,9 @@ import java.util.List;
 public class CourseDto {
     private Long id;
     private String title;
+    private String titleDe;
     private String description;
+    private String descriptionDe;
     private String slug;
     private String difficulty;
     private Integer estimatedMinutes;

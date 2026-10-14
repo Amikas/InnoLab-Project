@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { AlertCircle } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 export default function LoginForm() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { login, isLoading } = useAuth()
     const [error, setError] = useState("")
@@ -36,10 +38,10 @@ export default function LoginForm() {
                 }
                 router.refresh()
             } else {
-                setError(result.error || "Login failed")
+                setError(result.error || t("login.failed"))
             }
         } catch (err) {
-            setError("An unexpected error occurred")
+            setError(t("login.unexpected"))
         }
     }
 
@@ -55,7 +57,7 @@ export default function LoginForm() {
 
                 <div>
                     <label htmlFor="username" className="block text-sm font-medium mb-2">
-                        Username or Email
+                        {t("login.usernameLabel")}
                     </label>
                     <input
                         type="text"
@@ -63,13 +65,13 @@ export default function LoginForm() {
                         name="username"
                         required
                         className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Enter your username or email"
+                        placeholder={t("login.usernamePlaceholder")}
                     />
                 </div>
 
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium mb-2">
-                        Password
+                        {t("login.passwordLabel")}
                     </label>
                     <input
                         type="password"
@@ -77,17 +79,17 @@ export default function LoginForm() {
                         name="password"
                         required
                         className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Enter your password"
+                        placeholder={t("login.passwordPlaceholder")}
                     />
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="remember" defaultChecked className="rounded border-border" />
-                        <span className="text-muted-foreground">Remember me</span>
+                        <span className="text-muted-foreground">{t("login.rememberMe")}</span>
                     </label>
                     <Link href="/help#forgot-password" className="text-primary hover:underline">
-                        Forgot password?
+                        {t("login.forgotPassword")}
                     </Link>
                 </div>
 
@@ -96,7 +98,7 @@ export default function LoginForm() {
                     disabled={isLoading}
                     className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isLoading ? "Logging in..." : "Login"}
+                    {isLoading ? t("login.submitting") : t("login.submit")}
                 </button>
             </form>
         </div>

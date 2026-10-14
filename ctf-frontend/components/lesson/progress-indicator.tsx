@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, Circle, ChevronRight, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface LessonProgress {
   lessonId: number
@@ -23,13 +24,17 @@ interface ProgressIndicatorProps {
 }
 
 // Format duration helper
-function formatDuration(minutes: number | null): string {
-  if (!minutes) return 'Self-paced'
+function formatDuration(minutes: number | null, selfPaced = 'Self-paced'): string {
+  if (!minutes) return selfPaced
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   if (mins === 0) return `${hours}h`
   return `${hours}h ${mins}m`
+}
+
+export function ProgressIndicatorWithTranslation(props: ProgressIndicatorProps) {
+  return <ProgressIndicator {...props} />
 }
 
 export function ProgressIndicator({
@@ -39,6 +44,7 @@ export function ProgressIndicator({
   modules, // placeholder for now
   className,
 }: ProgressIndicatorProps) {
+  const { t } = useTranslation()
   const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
   const isComplete = progress === 100
 
@@ -53,7 +59,7 @@ export function ProgressIndicator({
             ) : (
               <BookOpen className="w-3.5 h-3.5" />
             )}
-            {completedLessons} of {totalLessons} lessons
+            {completedLessons} {t('courses.of')} {totalLessons} {t('courses.lessons')}
           </span>
           <span className={cn('font-medium', isComplete ? 'text-green-500' : 'text-foreground')}>
             {progress}%

@@ -33,6 +33,16 @@ public class LessonEntity {
     @Column(columnDefinition = "TEXT")
     private String detailedExplanation;
 
+    /** German variants (optional, English is the fallback). */
+    @Column(length = 200)
+    private String titleDe;
+
+    @Column(columnDefinition = "TEXT")
+    private String contentDe;
+
+    @Column(columnDefinition = "TEXT")
+    private String detailedExplanationDe;
+
     @Column(length = 500)
     private String videoUrl;
 
@@ -68,6 +78,18 @@ public class LessonEntity {
     @Column(name = "takeaway", columnDefinition = "TEXT")
     @Builder.Default
     private List<String> keyTakeaways = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "lesson_key_takeaways_de", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Column(name = "takeaway", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<String> keyTakeawaysDe = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "lesson_incidents_de", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Column(name = "incident", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<String> realWorldIncidentsDe = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

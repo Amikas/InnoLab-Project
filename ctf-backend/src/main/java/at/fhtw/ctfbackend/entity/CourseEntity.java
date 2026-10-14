@@ -26,6 +26,13 @@ public class CourseEntity {
     @Column(length = 2000)
     private String description;
 
+    /** German variants (optional, English is the fallback). */
+    @Column(length = 200)
+    private String titleDe;
+
+    @Column(length = 2000)
+    private String descriptionDe;
+
     @Column(unique = true, length = 200)
     private String slug;
 

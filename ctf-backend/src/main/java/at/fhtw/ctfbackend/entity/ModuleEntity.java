@@ -30,6 +30,13 @@ public class ModuleEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /** German variants (optional, English is the fallback). */
+    @Column(length = 200)
+    private String titleDe;
+
+    @Column(columnDefinition = "TEXT")
+    private String contentDe;
+
     @Column(nullable = false)
     @Builder.Default
     private Integer orderIndex = 0;

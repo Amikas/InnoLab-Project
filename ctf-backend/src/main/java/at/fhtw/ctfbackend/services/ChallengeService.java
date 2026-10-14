@@ -70,6 +70,18 @@ public class ChallengeService {
                                      Boolean requiresInstance,
                                      MultipartFile[] dockerFiles,
                                      String[] hints) throws IOException {
+        return createChallenge(title, null, description, null, category, difficulty, points, flag,
+                downloadFile, requiresInstance, dockerFiles, hints, null);
+    }
+
+    @Transactional
+    public ChallengeDto createChallenge(String title, String titleDe, String description, String descriptionDe,
+                                     String category,
+                                     String difficulty, Integer points, String flag,
+                                     MultipartFile downloadFile,
+                                     Boolean requiresInstance,
+                                     MultipartFile[] dockerFiles,
+                                     String[] hints, String[] hintsDe) throws IOException {
 
         String challengeId = title.toLowerCase()
                 .replaceAll("[^a-z0-9]", "-")
@@ -116,7 +128,9 @@ public class ChallengeService {
         ChallengeEntity entity = ChallengeEntity.builder()
                 .id(challengeId)
                 .title(title)
+                .titleDe(titleDe)
                 .description(description)
+                .descriptionDe(descriptionDe)
                 .category(category)
                 .difficulty(difficulty)
                 .points(points)
@@ -153,6 +167,9 @@ public class ChallengeService {
         } else {
             entity.setHintsJson("[]");
         }
+        if (hintsDe != null && hintsDe.length > 0) {
+            entity.setHintsJsonDe(objectMapper.writeValueAsString(hintsDe));
+        }
 
         try {
             ChallengeEntity savedEntity = repo.saveAndFlush(entity);
@@ -175,13 +192,27 @@ public class ChallengeService {
                                      Boolean requiresInstance,
                                      MultipartFile[] dockerFiles,
                                      String[] hints) throws IOException {
+        return updateChallenge(id, title, null, description, null, category, difficulty, points, flag,
+                downloadFile, requiresInstance, dockerFiles, hints, null);
+    }
+
+    @Transactional
+    public ChallengeDto updateChallenge(String id, String title, String titleDe, String description, String descriptionDe,
+                                     String category,
+                                     String difficulty, Integer points, String flag,
+                                     MultipartFile downloadFile,
+                                     Boolean requiresInstance,
+                                     MultipartFile[] dockerFiles,
+                                     String[] hints, String[] hintsDe) throws IOException {
 
         ChallengeEntity existingEntity = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Challenge not found: " + id));
 
         // Update basic fields
         if (title != null) existingEntity.setTitle(title);
+        if (titleDe != null) existingEntity.setTitleDe(titleDe);
         if (description != null) existingEntity.setDescription(description);
+        if (descriptionDe != null) existingEntity.setDescriptionDe(descriptionDe);
         if (category != null) existingEntity.setCategory(category);
         if (difficulty != null) existingEntity.setDifficulty(difficulty);
         if (points != null) existingEntity.setPoints(points);
@@ -218,8 +249,11 @@ public class ChallengeService {
         // Handle hints update
         if (hints != null && hints.length > 0) {
             existingEntity.setHintsJson(objectMapper.writeValueAsString(hints));
-        } else {
+        } else if (hints != null) {
             existingEntity.setHintsJson("[]");
+        }
+        if (hintsDe != null && hintsDe.length > 0) {
+            existingEntity.setHintsJsonDe(objectMapper.writeValueAsString(hintsDe));
         }
 
         ChallengeEntity updatedEntity = repo.save(existingEntity);
@@ -368,6 +402,8 @@ public class ChallengeService {
         challenge.setRequiresInstance(e.isRequiresInstance());
         challenge.setChallengeFolderPath(e.getChallengeFolderPath());
         challenge.setDockerFilesJson(e.getDockerFilesJson());
+        challenge.setTitleDe(e.getTitleDe());
+        challenge.setDescriptionDe(e.getDescriptionDe());
 
         if (e.getHintsJson() != null && !e.getHintsJson().isEmpty()) {
             try {
@@ -378,6 +414,15 @@ public class ChallengeService {
             }
         } else {
             challenge.setHints(new String[0]);
+        }
+        if (e.getHintsJsonDe() != null && !e.getHintsJsonDe().isEmpty()) {
+            try {
+                challenge.setHintsDe(objectMapper.readValue(e.getHintsJsonDe(), String[].class));
+            } catch (IOException ex) {
+                challenge.setHintsDe(new String[0]);
+            }
+        } else {
+            challenge.setHintsDe(new String[0]);
         }
 
         return challenge;
