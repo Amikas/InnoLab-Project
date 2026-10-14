@@ -2,6 +2,7 @@
 
 import { AlertTriangle, AlertCircle, Info, CheckCircle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 type CalloutType = 'danger' | 'warning' | 'info' | 'success'
 
@@ -46,8 +47,10 @@ const calloutConfig = {
 }
 
 export function Callout({ type, title, children, className, dismissible, onDismiss }: CalloutProps) {
+  const { t } = useTranslation()
   const config = calloutConfig[type]
   const Icon = config.icon
+  const defaultTitle = t(`callout.${type}`, { defaultValue: config.title })
 
   return (
     <div
@@ -60,9 +63,9 @@ export function Callout({ type, title, children, className, dismissible, onDismi
     >
       <Icon className={cn('w-5 h-5 shrink-0 mt-0.5', config.iconColor)} />
       <div className="flex-1 min-w-0">
-        {(title || config.title) && (
+         {(title || defaultTitle) && (
           <p className={cn('font-semibold mb-1', config.iconColor)}>
-            {title || config.title}
+            {title || defaultTitle}
           </p>
         )}
         <div className="text-sm text-muted-foreground leading-relaxed">
@@ -73,7 +76,7 @@ export function Callout({ type, title, children, className, dismissible, onDismi
         <button
           onClick={onDismiss}
           className="absolute top-2 right-2 p-1 rounded hover:bg-muted/50 transition-colors"
-          aria-label="Dismiss"
+          aria-label={t("common.dismiss")}
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>

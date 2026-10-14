@@ -485,6 +485,34 @@
   @apply my-4 border-border;
 }
 
+/* Smooth language-switch transition (toggled by I18nProvider).
+   LanguageSwitcher dispatches `i18n:switch-start`, waits for the fade-out,
+   swaps the language, then dispatches `i18n:switch-end` for the fade-in. */
+.i18n-transition {
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    filter 220ms ease;
+  will-change: opacity, transform, filter;
+}
+
+.i18n-switching {
+  opacity: 0;
+  transform: translateY(6px);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .i18n-transition {
+    transition: none;
+  }
+  .i18n-switching {
+    transform: none;
+    filter: none;
+  }
+}
+
 /* Global cursor-pointer for all interactive elements */
 button:not(:disabled),
 a:not([aria-disabled="true"]),

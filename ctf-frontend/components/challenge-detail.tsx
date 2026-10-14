@@ -20,6 +20,8 @@ import {
     Code,
 } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
+import { pickLocalized, normalizeLocale, getLocalizedArray } from "@/lib/i18n/content";
 import KaliTerminal from "@/components/KaliTerminalClient";
 import type { Challenge, EnvironmentInstance } from "@/lib/types";
 import { hasDownloadableFiles, requiresInstance } from "@/lib/types";
@@ -43,16 +45,21 @@ function friendlyEnvironmentError(rawMessage?: string): string {
         lower.includes("network error") ||
         lower.includes("network request failed")
     ) {
-        return "Network error. Please check your connection and try again.";
+        return document.documentElement.lang === "de" ? "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung." : "Network error. Please check your connection and try again.";
     }
     if (lower.includes("request failed (") || lower.includes("internal server error")) {
-        return "Something went wrong with the environment. Please try again in a few minutes.";
+        return document.documentElement.lang === "de" ? "Etwas ist mit der Umgebung schiefgelaufen. Bitte versuchen Sie es in wenigen Minuten erneut." : "Something went wrong with the environment. Please try again in a few minutes.";
     }
     return msg;
 }
 
 
 export default function ChallengeDetail({ challenge, solveStats = null, setSolveStats }: ChallengeDetailProps) {
+    const { t, i18n } = useTranslation();
+    const contentLocale = normalizeLocale(i18n.language);
+    const displayTitle = pickLocalized(challenge.title, (challenge as unknown as { titleDe?: string }).titleDe, contentLocale);
+    const displayDescription = pickLocalized(challenge.description, (challenge as unknown as { descriptionDe?: string }).descriptionDe, contentLocale);
+    const displayHints = getLocalizedArray(challenge.hints, (challenge as unknown as { hintsDe?: string[] }).hintsDe, contentLocale);
     const [flag, setFlag] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [downloading, setDownloading] = useState(false);
@@ -87,7 +94,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                 // For each already-revealed hint, store the text from the challenge data
                 const revealed: { [index: number]: string } = {};
                 for (const index of res.revealedIndexes) {
-                    revealed[index] = challenge.hints![index];
+                    revealed[index] = displayHints[index];
                 }
                 setRevealedHints(revealed);
 
@@ -438,13 +445,13 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                 className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Challenges
+                {t('challenges.back')}
             </Link>
 
             <div className="bg-card p-6 md:p-8 rounded-lg border border-border shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
                     <div className="flex-1">
-                        <h1 className="text-2xl md:text-3xl font-bold mb-3">{challenge.title}</h1>
+                        <h1 className="text-2xl md:text-3xl font-bold mb-3">{displayTitle}</h1>
                         <div className="flex flex-wrap gap-3 mb-4">
                             <span
                                 className={`text-sm font-semibold px-3 py-1 rounded-full ${
@@ -461,20 +468,20 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                             </span>
                             {solved && (
                                 <span className="text-sm px-3 py-1 bg-green-500/10 text-green-500 rounded-full">
-                                    SOLVED 
+                                    {t('challenges.solved')} 
                                 </span>
                             )}
                         </div>
-                        <p className="text-muted-foreground">{challenge.description}</p>
+                        <p className="text-muted-foreground">{displayDescription}</p>
                     </div>
                     <div className="lg:text-right">
                         <div className="text-3xl font-bold text-accent">
                             {challenge.points}
                         </div>
-                        <div className="text-sm text-muted-foreground">points</div>
+                        <div className="text-sm text-muted-foreground">{t('challenges.points')}</div>
                         {solveStats && (
                             <div className="mt-2 text-sm">
-                                <span className="text-muted-foreground">Solved by </span>
+                                <span className="text-muted-foreground">{t('challenges.solvedBy', { count: solveStats.solveCount }).split(String(solveStats.solveCount))[0]}</span>
                                 <span className="font-semibold">{solveStats.solveCount} users</span>
                             </div>
                         )}
@@ -524,7 +531,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Download className="w-5 h-5" />
-                            Challenge Files
+                            {t('challenges.files')}
                         </h2>
                         <button
                             onClick={handleDownload}
@@ -532,10 +539,10 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                             className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download className="w-4 h-4" />
-                            {downloading ? "Downloading..." : "Download Challenge File"}
+                            {downloading ? t('challenges.downloading') : t('challenges.downloadFile')}
                         </button>
                         <p className="text-sm text-muted-foreground mt-2">
-                            Download the challenge files to get started
+                            {t('challenges.downloadDesc')}
                         </p>
                     </div>
                 )}
@@ -545,7 +552,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Terminal className="w-5 h-5" />
-                            Interactive Environment
+                            {t('challenges.interactiveEnv')}
                         </h2>
 
                         <div className="space-y-4">
@@ -563,17 +570,17 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                     {startingTerminal ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Preparing environment...
+                                            {t('challenges.preparing')}
                                         </>
                                     ) : environment?.status === "RUNNING" ? (
                                         <>
                                             <CheckCircle2 className="w-4 h-4" />
-                                            Environment Running
+                                            {t('challenges.envRunning')}
                                         </>
                                     ) : (
                                         <>
                                             <Play className="w-4 h-4" />
-                                            Start Environment
+                                            {t('challenges.startEnv')}
                                         </>
                                     )}
                                 </button>
@@ -587,12 +594,12 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                             {showTerminal ? (
                                                 <>
                                                     <XCircle className="w-4 h-4" />
-                                                    Hide Terminal
+                                                    {t('challenges.hideTerminal')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Terminal className="w-4 h-4" />
-                                                    Open Terminal
+                                                    {t('challenges.openTerminal')}
                                                 </>
                                             )}
                                         </button>
@@ -605,12 +612,12 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                             {stoppingTerminal ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                    Stopping...
+                                                    {t('challenges.stopping')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Square className="w-4 h-4" />
-                                                    Stop Environment
+                                                    {t('challenges.stopEnv')}
                                                 </>
                                             )}
                                         </button>
@@ -630,7 +637,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Clock className="w-4 h-4 text-muted-foreground" />
-                                            <span className="text-sm font-medium">Status:</span>
+                                            <span className="text-sm font-medium">{t('challenges.status')}</span>
                                             <span className={`text-sm px-2 py-1 rounded ${
                                                 environment.status === "RUNNING"
                                                     ? "bg-green-500/10 text-green-500"
@@ -651,13 +658,13 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <Wifi className="w-4 h-4 text-muted-foreground" />
-                                                    <span className="text-sm font-medium">SSH Access</span>
+                                                    <span className="text-sm font-medium">{t('challenges.sshAccess')}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => copyToClipboard(`ssh user@localhost -p ${environment.sshPort}`, "SSH Command")}
                                                     className="text-xs text-primary hover:underline"
                                                 >
-                                                    Copy
+                                                    {t('challenges.copy')}
                                                 </button>
                                             </div>
                                             <code className="text-xs bg-muted p-2 rounded block font-mono">
@@ -669,14 +676,14 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                     </div>
 
                                     <div className="text-xs text-muted-foreground pt-2 border-t">
-                                        Instance ID: {environment.instanceId}
+                                        {t('challenges.instanceId')} {environment.instanceId}
                                     </div>
                                 </div>
                             )}
 
                             {!environment && (
                                 <p className="text-sm text-muted-foreground">
-                                    Start an environment to get SSH access and solve the challenge.
+                                    {t('challenges.startEnvHint')}
                                 </p>
                             )}
                         </div>
@@ -685,15 +692,15 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
 
 
                 {/* Hints Section */}
-                {challenge.hints && challenge.hints.length > 0 && (
+                {displayHints && displayHints.length > 0 && (
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Info className="w-5 h-5" />
-                            Hints ({challenge.hints.length})
+                            {t('challenges.hints', { count: displayHints.length })}
                         </h2>
 
                         <div className="space-y-4">
-                            {challenge.hints.map((hint, index) => {
+                            {displayHints.map((hint, index) => {
                                 const penalties = [10, 20, 25];
                                 const penalty = penalties[index] ?? 0;
                                 const isRevealed = index in revealedHints;
@@ -707,16 +714,16 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                     <div key={index} className="rounded-lg border border-primary/20 overflow-hidden">
                                         <div className="p-4 bg-primary/5 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <span className="text-sm font-medium">Hint {index + 1}</span>
+                                                <span className="text-sm font-medium">{t('challenges.hint', { n: index + 1 })}</span>
                                                 {!solved && <span className="text-xs text-yellow-500">-{penalty}%</span>}
                                             </div>
 
                                             {solved ? (
-                                                <span className="text-xs text-muted-foreground">Solved</span>
+                                                <span className="text-xs text-muted-foreground">{t('challenges.revealed')}</span>
                                             ) : (
                                                 <>
                                                     {isRevealed && (
-                                                        <span className="text-xs text-green-500">Revealed</span>
+                                                        <span className="text-xs text-green-500">{t('challenges.revealed')}</span>
                                                     )}
                                                     {isLocked && (
                                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -728,11 +735,11 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                                             onClick={() => handleRevealHint(index)}
                                                             className="text-xs text-primary hover:underline"
                                                         >
-                                                            Reveal (-{penalty}%)
+                                                            {t('challenges.reveal', { p: penalty })}
                                                         </button>
                                                     )}
                                                     {isBlocked && (
-                                                        <span className="text-xs text-muted-foreground">Locked</span>
+                                                        <span className="text-xs text-muted-foreground">{t('challenges.locked')}</span>
                                                     )}
                                                 </>
                                             )}
@@ -757,10 +764,9 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                         <div className="flex items-start gap-3">
                             <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h3 className="font-medium text-blue-500 mb-1">No Additional Files or Environment Needed</h3>
+                                <h3 className="font-medium text-blue-500 mb-1">{t('challenges.noEnvNeeded')}</h3>
                                 <p className="text-sm text-blue-600/80">
-                                    This challenge doesn&apos;t require any downloadable files or a separate environment.
-                                    Use your existing tools and knowledge to analyze and solve the challenge.
+                                    {t('challenges.noEnvNeededDesc')}
                                 </p>
                             </div>
                         </div>
@@ -772,7 +778,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                     <div>
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Flag className="w-5 h-5" />
-                            Submit Flag
+                            {t('challenges.submitFlag')}
                         </h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -782,7 +788,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                         id="flag"
                                         value={flag}
                                         onChange={(e) => setFlag(e.target.value)}
-                                        placeholder="flag{...}"
+                                        placeholder={t("challenges.flagPlaceholder")}
                                         className={`flex-1 px-4 py-2.5 bg-background border rounded-lg focus:outline-none font-mono placeholder:text-muted-foreground ${
                                             result?.status === "success"
                                                 ? "border-green-500 text-green-600 focus:ring-2 focus:ring-green-500"
@@ -799,18 +805,18 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                                         {submitting ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                Submitting...
+                                                {t('challenges.submitting')}
                                             </>
                                         ) : (
                                             <>
                                                 <Flag className="w-4 h-4" />
-                                                Submit Flag
+                                                {t('challenges.submitFlag')}
                                             </>
                                         )}
                                     </button>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-2">
-                                    Enter the flag you found in the format: flag{`{`}your_flag_here{`}`}
+                                    {t('challenges.flagHint')} flag{`{`}your_flag_here{`}`}
                                 </p>
                             </div>
                         </form>
@@ -821,9 +827,9 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
                     <div className="p-4 bg-green-500/10 border border-green-500 rounded-lg flex items-center gap-3">
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <div>
-                            <p className="text-green-500 font-semibold">Challenge Solved!</p>
+                            <p className="text-green-500 font-semibold">{t('challenges.solvedTitle')}</p>
                             <p className="text-sm text-green-600/80 mt-1">
-                                You earned {pointsEarned ?? challenge.points} points for solving this challenge.
+                                {t('challenges.solvedDesc', { points: pointsEarned ?? challenge.points })}
                             </p>
                         </div>
                     </div>

@@ -13,7 +13,9 @@ export interface User {
 export interface Challenge {
     id: string
     title: string
+    titleDe?: string
     description: string
+    descriptionDe?: string
     category: "binary-exploitation" | "cryptography" | "forensics" | "reverse-engineering" | "web-exploitation"
     difficulty: "easy" | "medium" | "hard"
     points: number
@@ -25,6 +27,7 @@ export interface Challenge {
     originalFilename?: string
     flag?: string
     hints?: string[]
+    hintsDe?: string[]
     files?: { name: string; url: string }[]
 
     // NEW FIELDS for instance-based challenges (from backend)
@@ -95,7 +98,9 @@ export interface ApiResult<T = any> {
 
 export interface CreateChallengeData {
     title: string
+    titleDe?: string
     description: string
+    descriptionDe?: string
     category: string
     difficulty: string
     points: number

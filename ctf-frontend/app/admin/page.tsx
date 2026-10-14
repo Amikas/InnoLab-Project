@@ -6,8 +6,10 @@ import { Shield, Users, Flag, TrendingUp, BookOpen, Zap } from "lucide-react"
 import { getAdminStats, type AdminStats } from "@/lib/api/admin"
 import { useAuth } from '@/lib/hooks/use-auth'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 
 export default function AdminDashboardPage() {
+  const { t } = useTranslation()
   const { auth, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -74,7 +76,7 @@ export default function AdminDashboardPage() {
       <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center">
-            <p className="text-foreground">Loading admin dashboard...</p>
+            <p className="text-foreground">{t('admin.loading')}</p>
           </div>
         </div>
       </div>
@@ -86,13 +88,13 @@ export default function AdminDashboardPage() {
       <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Error</h1>
+            <h1 className="text-2xl font-bold text-destructive mb-4">{t('admin.error')}</h1>
             <p className="text-muted-foreground mb-4">{error}</p>
             <Link
               href="/challenges"
               className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium cursor-pointer"
             >
-              Go to Challenges
+              {t('admin.goChallenges')}
             </Link>
           </div>
         </div>
@@ -105,7 +107,7 @@ export default function AdminDashboardPage() {
       <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center">
-            <p className="text-destructive">Failed to load admin dashboard</p>
+            <p className="text-destructive">{t('admin.loadFailed')}</p>
           </div>
         </div>
       </div>
@@ -117,9 +119,9 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">{t('admin.dashboard')}</h1>
             <p className="text-muted-foreground">
-              Welcome back, {auth.user}! Manage challenges, users, and platform statistics
+              {t('admin.welcome', { user: auth.user })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -128,21 +130,21 @@ export default function AdminDashboardPage() {
               className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium cursor-pointer"
             >
               <BookOpen className="w-5 h-5" />
-              Manage Courses
+              {t('admin.manageCourses')}
             </Link>
             <Link
               href="/admin/users"
               className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors font-medium cursor-pointer"
             >
               <Users className="w-5 h-5" />
-              Manage Users
+              {t('admin.manageUsers')}
             </Link>
             <Link
               href="/admin/challenges"
               className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium cursor-pointer"
             >
               <Zap className="w-5 h-5" />
-              Manage Challenges
+              {t('admin.manageChallenges')}
             </Link>
           </div>
         </div>
@@ -150,25 +152,25 @@ export default function AdminDashboardPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <StatCard
-            title="Total Challenges"
+            title={t('admin.totalChallenges')}
             value={stats.totalChallenges}
             icon={<Flag className="w-6 h-6" />}
             color="primary"
           />
           <StatCard
-            title="Total Users"
+            title={t('admin.totalUsers')}
             value={stats.totalUsers}
             icon={<Users className="w-6 h-6" />}
             color="primary"
           />
           <StatCard
-            title="Total Submissions"
+            title={t('admin.totalSubmissions')}
             value={stats.totalSubmissions}
             icon={<TrendingUp className="w-6 h-6" />}
             color="primary"
           />
           <StatCard
-            title="Active Challenges"
+            title={t('admin.activeChallenges')}
             value={stats.activeChallenges}
             icon={<Shield className="w-6 h-6" />}
             color="primary"
@@ -177,7 +179,7 @@ export default function AdminDashboardPage() {
 
         {/* Category Breakdown */}
         <div className="bg-card border border-border rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Challenges by Category</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">{t('admin.byCategory')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.challengesByCategory.map((cat) => (
               <div key={cat.category} className="bg-muted rounded-lg p-4">
@@ -190,7 +192,7 @@ export default function AdminDashboardPage() {
 
         {/* Difficulty Breakdown */}
         <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Challenges by Difficulty</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">{t('admin.byDifficulty')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {stats.challengesByDifficulty.map((diff) => (
               <div key={diff.difficulty} className="bg-muted rounded-lg p-4">

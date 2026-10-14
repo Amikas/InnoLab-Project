@@ -47,7 +47,9 @@ import { cn } from "@/lib/utils";
 
 const challengeFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
+  titleDe: z.string().optional(),
   description: z.string().min(1, "Description is required"),
+  descriptionDe: z.string().optional(),
   category: z.string().min(1, "Category is required"),
   difficulty: z.enum(["easy", "medium", "hard"]),
   points: z.number().min(1, "Points must be at least 1"),
@@ -94,7 +96,9 @@ export default function AddChallengeForm() {
     resolver: zodResolver(challengeFormSchema),
     defaultValues: {
       title: "",
+      titleDe: "",
       description: "",
+      descriptionDe: "",
       category: "",
       difficulty: "easy",
       points: 100,
@@ -207,7 +211,9 @@ export default function AddChallengeForm() {
     try {
       const formData = new FormData();
       formData.append("title", data.title);
+      if (data.titleDe) formData.append("titleDe", data.titleDe);
       formData.append("description", data.description);
+      if (data.descriptionDe) formData.append("descriptionDe", data.descriptionDe);
       formData.append("category", data.category);
       formData.append("difficulty", data.difficulty);
       formData.append("points", data.points.toString());
@@ -242,7 +248,9 @@ export default function AddChallengeForm() {
 
       form.reset({
         title: "",
+        titleDe: "",
         description: "",
+        descriptionDe: "",
         category: "",
         difficulty: "easy",
         points: 100,
@@ -475,6 +483,47 @@ export default function AddChallengeForm() {
                       </FormItem>
                     )}
                   />
+
+                  <div className="rounded-lg border border-dashed border-border p-4 space-y-6 bg-muted/30">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Deutsche Übersetzung (optional — English is shown as fallback)
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="titleDe"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Titel (DE)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="z. B. Buffer-Overflow-Challenge"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="descriptionDe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Beschreibung (DE)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Beschreiben Sie die Challenge auf Deutsch..."
+                              className="min-h-[100px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField

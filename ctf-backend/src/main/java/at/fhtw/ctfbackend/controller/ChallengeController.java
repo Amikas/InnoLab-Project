@@ -125,7 +125,9 @@ public class ChallengeController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createChallenge(
             @RequestParam String title,
+            @RequestParam(required = false) String titleDe,
             @RequestParam String description,
+            @RequestParam(required = false) String descriptionDe,
             @RequestParam String category,
             @RequestParam String difficulty,
             @RequestParam Integer points,
@@ -134,7 +136,8 @@ public class ChallengeController {
 
             @RequestParam(required = false, defaultValue = "false") String requiresInstance,
             @RequestParam(required = false) MultipartFile[] dockerFiles,
-            @RequestParam(required = false) String[] hints) {
+            @RequestParam(required = false) String[] hints,
+            @RequestParam(required = false) String[] hintsDe) {
 
         try {
             logger.info("Creating challenge with parameters...");
@@ -143,8 +146,8 @@ public class ChallengeController {
             Boolean requiresInstanceBoolean = Boolean.parseBoolean(requiresInstance);
 
             ChallengeDto createdChallenge = challengeService.createChallenge(
-                    title, description, category, difficulty, points, flag,
-                    downloadFile, requiresInstanceBoolean, dockerFiles, hints
+                    title, titleDe, description, descriptionDe, category, difficulty, points, flag,
+                    downloadFile, requiresInstanceBoolean, dockerFiles, hints, hintsDe
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(createdChallenge);
@@ -164,7 +167,9 @@ public class ChallengeController {
     public ResponseEntity<ChallengeDto> updateChallenge(
             @PathVariable String id,
             @RequestParam(required = false) String title,
+            @RequestParam(required = false) String titleDe,
             @RequestParam(required = false) String description,
+            @RequestParam(required = false) String descriptionDe,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) Integer points,
@@ -173,15 +178,16 @@ public class ChallengeController {
 
             @RequestParam(required = false) String requiresInstance,
             @RequestParam(required = false) MultipartFile[] dockerFiles,
-            @RequestParam(required = false) String[] hints) {
+            @RequestParam(required = false) String[] hints,
+            @RequestParam(required = false) String[] hintsDe) {
 
         try {
             // Convert string to boolean for update as well
             Boolean requiresInstanceBoolean = requiresInstance != null ? Boolean.parseBoolean(requiresInstance) : null;
             
             ChallengeDto updatedChallenge = challengeService.updateChallenge(
-                    id, title, description, category, difficulty, points, flag,
-                    downloadFile, requiresInstanceBoolean, dockerFiles, hints
+                    id, title, titleDe, description, descriptionDe, category, difficulty, points, flag,
+                    downloadFile, requiresInstanceBoolean, dockerFiles, hints, hintsDe
             );
 
             return ResponseEntity.ok(updatedChallenge);

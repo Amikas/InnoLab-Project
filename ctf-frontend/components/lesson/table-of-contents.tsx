@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { Menu, X, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface TocHeading {
   id: string
@@ -16,6 +17,7 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ headings, className }: TableOfContentsProps) {
+  const { t } = useTranslation()
   const [activeId, setActiveId] = useState<string>('')
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
@@ -73,7 +75,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
   const DesktopTOC = () => (
     <nav className="sticky top-24 space-y-1 max-h-[calc(100vh-10rem)] overflow-y-auto">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-        On this page
+        {t('courses.onThisPage')}
       </p>
       {h2Headings.map((heading) => (
         <div key={heading.id}>
@@ -128,7 +130,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
         )}
       >
         <Menu className="w-4 h-4" />
-        <span className="text-sm font-medium">Contents</span>
+        <span className="text-sm font-medium">{t('courses.contents')}</span>
       </button>
 
       {/* Mobile drawer overlay */}
@@ -149,7 +151,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
         )}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold">Contents</h3>
+          <h3 className="font-semibold">{t('courses.contents')}</h3>
           <button
             onClick={() => setIsMobileOpen(false)}
             className="p-2 rounded-lg hover:bg-muted transition-colors"

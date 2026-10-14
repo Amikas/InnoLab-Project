@@ -3,21 +3,28 @@ import { apiClient } from './client'
 export interface Lesson {
   id: number
   title: string
+  titleDe?: string | null
   content: string
+  contentDe?: string | null
   detailedExplanation: string | null
+  detailedExplanationDe?: string | null
   videoUrl: string | null
   orderIndex: number
   challengeIds: string[]
   codeExamplesJson: string[]
   realWorldIncidents: string[]
+  realWorldIncidentsDe?: string[]
   externalReferences: string[]
   keyTakeaways: string[]
+  keyTakeawaysDe?: string[]
 }
 
 export interface Module {
   id: number
   title: string
+  titleDe?: string | null
   content: string | null
+  contentDe?: string | null
   orderIndex: number
   lessons: Lesson[]
 }
@@ -25,7 +32,9 @@ export interface Module {
 export interface Course {
   id: number
   title: string
+  titleDe?: string | null
   description: string | null
+  descriptionDe?: string | null
   slug: string
   difficulty: string | null
   estimatedMinutes: number | null
@@ -36,7 +45,9 @@ export interface Course {
 export interface CourseListItem {
   id: number
   title: string
+  titleDe?: string | null
   description: string | null
+  descriptionDe?: string | null
   slug: string
   difficulty: string | null
   estimatedMinutes: number | null

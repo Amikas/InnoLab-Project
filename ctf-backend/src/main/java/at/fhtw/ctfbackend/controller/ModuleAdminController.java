@@ -64,7 +64,9 @@ public class ModuleAdminController {
         }
 
         existing.setTitle(moduleDto.getTitle());
+        existing.setTitleDe(moduleDto.getTitleDe());
         existing.setContent(moduleDto.getContent());
+        existing.setContentDe(moduleDto.getContentDe());
         existing.setOrderIndex(moduleDto.getOrderIndex() != null ? moduleDto.getOrderIndex() : 0);
 
         if (moduleDto.getCourseId() != null) {
@@ -99,7 +101,9 @@ public class ModuleAdminController {
                 .id(entity.getId())
                 .courseId(entity.getCourse().getId())
                 .title(entity.getTitle())
+                .titleDe(entity.getTitleDe())
                 .content(entity.getContent())
+                .contentDe(entity.getContentDe())
                 .orderIndex(entity.getOrderIndex())
                 .build();
     }
@@ -107,7 +111,9 @@ public class ModuleAdminController {
     private ModuleEntity toEntity(ModuleDto dto) {
         return ModuleEntity.builder()
                 .title(dto.getTitle())
+                .titleDe(dto.getTitleDe())
                 .content(dto.getContent())
+                .contentDe(dto.getContentDe())
                 .orderIndex(dto.getOrderIndex() != null ? dto.getOrderIndex() : 0)
                 .build();
     }

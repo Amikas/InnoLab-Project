@@ -8,7 +8,9 @@ import lombok.Setter;
 public class CategoryDto {
     private String id;
     private String name;
+    private String nameDe;
     private String summary;
+    private String summaryDe;
     private String fileUrl;
 
     public CategoryDto(String id, String name, String summary, String fileUrl) {

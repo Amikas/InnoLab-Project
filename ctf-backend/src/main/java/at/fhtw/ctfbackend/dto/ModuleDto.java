@@ -15,7 +15,9 @@ public class ModuleDto {
     private Long id;
     private Long courseId;
     private String title;
+    private String titleDe;
     private String content;
+    private String contentDe;
     private Integer orderIndex;
     private List<LessonDto> lessons;
 }

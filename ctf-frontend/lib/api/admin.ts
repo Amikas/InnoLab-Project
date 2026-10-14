@@ -98,7 +98,9 @@ export async function updateUserAdmin(id: number, data: AdminUserUpdate): Promis
 export interface CourseAdmin {
     id: number;
     title: string;
+    titleDe?: string | null;
     description: string;
+    descriptionDe?: string | null;
     slug: string;
     difficulty: string | null;
     estimatedMinutes: number | null;
@@ -110,7 +112,9 @@ export interface ModuleAdmin {
     id: number;
     courseId: number;
     title: string;
+    titleDe?: string | null;
     content: string | null;
+    contentDe?: string | null;
     orderIndex: number;
 }
 
@@ -118,15 +122,20 @@ export interface LessonAdmin {
     id: number;
     moduleId: number;
     title: string;
+    titleDe?: string | null;
     content: string;
+    contentDe?: string | null;
     detailedExplanation: string | null;
+    detailedExplanationDe?: string | null;
     videoUrl: string | null;
     orderIndex: number;
     challengeIds: string[];
     codeExamplesJson: string[];
     realWorldIncidents: string[];
+    realWorldIncidentsDe?: string[];
     externalReferences: string[];
     keyTakeaways: string[];
+    keyTakeawaysDe?: string[];
 }
 
 export async function getAllCoursesAdmin(): Promise<CourseAdmin[]> {

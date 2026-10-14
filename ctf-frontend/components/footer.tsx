@@ -1,7 +1,11 @@
 import Link from "next/link"
 import { Github, Mail, Flag } from "lucide-react"
+import { getLocale } from "@/lib/i18n/get-locale"
+import { getDictionary } from "@/lib/i18n/dictionaries"
 
-export default function Footer() {
+export default async function Footer() {
+  const locale = await getLocale()
+  const dict = getDictionary(locale)
   const currentYear = new Date().getFullYear()
 
   return (
@@ -12,11 +16,10 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-2">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-primary mb-4">
               <Flag className="w-6 h-6" />
-              <span>CTF Platform</span>
+              <span>{dict.nav.platformName}</span>
             </Link>
             <p className="text-muted-foreground mb-4 max-w-md">
-              Master cybersecurity skills through hands-on Capture The Flag challenges. Learn, practice, and compete
-              with a global community.
+              {dict.footer.tagline}
             </p>
             <div className="flex gap-4">
               <a
@@ -38,26 +41,26 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Quick Links</h3>
+            <h3 className="font-semibold text-foreground mb-4">{dict.footer.quickLinks}</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/challenges" className="text-muted-foreground hover:text-primary transition-colors">
-                  Challenges
+                  {dict.footer.challenges}
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="text-muted-foreground hover:text-primary transition-colors">
-                  Courses
+                  {dict.footer.courses}
                 </Link>
               </li>
               <li>
                 <Link href="/scoreboard" className="text-muted-foreground hover:text-primary transition-colors">
-                  Scoreboard
+                  {dict.footer.scoreboard}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                  About Us
+                  {dict.footer.aboutUs}
                 </Link>
               </li>
             </ul>
@@ -65,26 +68,26 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Support</h3>
+            <h3 className="font-semibold text-foreground mb-4">{dict.footer.support}</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/help" className="text-muted-foreground hover:text-primary transition-colors">
-                  Help Center
+                  {dict.footer.helpCenter}
                 </Link>
               </li>
               <li>
                 <Link href="/help#faq" className="text-muted-foreground hover:text-primary transition-colors">
-                  FAQ
+                  {dict.footer.faq}
                 </Link>
               </li>
               <li>
                 <Link href="/help#contact" className="text-muted-foreground hover:text-primary transition-colors">
-                  Contact Us
+                  {dict.footer.contactUs}
                 </Link>
               </li>
               <li>
                 <Link href="/help#rules" className="text-muted-foreground hover:text-primary transition-colors">
-                  Rules
+                  {dict.footer.rules}
                 </Link>
               </li>
             </ul>
@@ -92,7 +95,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} CTF Training Platform. All rights reserved.</p>
+          <p>&copy; {currentYear} {dict.footer.copyright}</p>
         </div>
       </div>
     </footer>
