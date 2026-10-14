@@ -29,7 +29,7 @@ public class CategorySeeder {
                     withDe(new CategoryEntity("web-exploitation", "Web-Exploitation", "Discover and exploit web application vulnerabilities.", ""),
                             "Web-Exploitation", "Entdecken und nutzen Sie Schwachstellen in Webanwendungen aus."),
                     withDe(new CategoryEntity("binary-exploitation", "Binary-Exploitation", "Exploit memory corruption vulnerabilities in binaries.", ""),
-                            "Binary-Exploitation", "Nutzen Sie Speichermanipulations-Schwachstellen in Binärdateien aus."),
+                            "Binary-Exploitation", "Nutzen Sie Schwachstellen bei der Speichermanipulation in Binärdateien aus."),
                     withDe(new CategoryEntity("forensics", "Forensics", "Investigate digital evidence and recover hidden data.", ""),
                             "Forensik", "Untersuchen Sie digitale Beweise und stellen Sie verborgene Daten wieder her."),
                     withDe(new CategoryEntity("reverse-engineering", "Reverse Engineering", "Analyze binaries and understand compiled code.", ""),
