@@ -34,4 +34,9 @@ def test_login_failed(browser):
     assert "Invalid username or passwor" in error.text
 
 def test_login_successful(logged_in_browser):
+    # NOTE: the session fixture may have navigated elsewhere and the navbar
+    # re-renders after auth check; wait instead of assuming instant presence.
+    WebDriverWait(logged_in_browser, 30).until(
+        EC.presence_of_element_located((By.XPATH, "//button[text()='Logout']"))
+    )
     assert logged_in_browser.find_element(By.XPATH, "//button[text()='Logout']")
