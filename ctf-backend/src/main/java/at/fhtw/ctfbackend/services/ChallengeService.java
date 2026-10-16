@@ -6,6 +6,7 @@ import at.fhtw.ctfbackend.dto.ChallengeDto;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import at.fhtw.ctfbackend.repository.HintRevealRepository;
 import at.fhtw.ctfbackend.repository.SolveRepository;
+import at.fhtw.ctfbackend.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,18 +30,21 @@ public class ChallengeService {
     private final SolveRepository solveRepository;
     private final HintRevealRepository hintRevealRepository;
     private final EnvironmentService environmentService;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     public ChallengeService(ChallengeRepository repo,
                             ChallengeFileStorageService fileStorageService,
                             SolveRepository solveRepository,
                             HintRevealRepository hintRevealRepository,
-                            EnvironmentService environmentService) {
+                            EnvironmentService environmentService,
+                            UserRepository userRepository) {
         this.repo = repo;
         this.fileStorageService = fileStorageService;
         this.solveRepository = solveRepository;
         this.hintRevealRepository = hintRevealRepository;
         this.environmentService = environmentService;
+        this.userRepository = userRepository;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -332,11 +336,11 @@ public class ChallengeService {
                 .count();
         stats.put("instanceChallenges", instanceChallenges);
 
-        // Total users - placeholder for now
-        stats.put("totalUsers", "N/A");
+        // Total persisted users, including inactive users and admins
+        stats.put("totalUsers", userRepository.count());
 
-        // Total submissions - placeholder for now
-        stats.put("totalSubmissions", "N/A");
+        // Only successful submissions are persisted as solves
+        stats.put("totalSubmissions", solveRepository.count());
 
         // Active challenges (same as total for now)
         stats.put("activeChallenges", totalChallenges);

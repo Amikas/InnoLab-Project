@@ -5,6 +5,7 @@ import at.fhtw.ctfbackend.entity.ChallengeEntity;
 import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import at.fhtw.ctfbackend.repository.HintRevealRepository;
 import at.fhtw.ctfbackend.repository.SolveRepository;
+import at.fhtw.ctfbackend.repository.UserRepository;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ class ChallengeServiceDeleteTest {
     @Mock private SolveRepository solveRepository;
     @Mock private HintRevealRepository hintRevealRepository;
     @Mock private EnvironmentService environmentService;
+    @Mock private UserRepository userRepository;
 
     private ChallengeService challengeService;
 
@@ -34,7 +36,8 @@ class ChallengeServiceDeleteTest {
                 fileStorageService,
                 solveRepository,
                 hintRevealRepository,
-                environmentService);
+                environmentService,
+                userRepository);
     }
 
     @Test
