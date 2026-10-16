@@ -119,7 +119,13 @@
   "scoreboard": {
     "metaTitle": "Bestenliste | CTF-Plattform",
     "title": "Bestenliste",
-    "comingSoon": "Demnächst verfügbar"
+    "description": "Die besten 100 Nutzer, sortiert nach gelösten Challenges.",
+    "rank": "Rang",
+    "username": "Benutzername",
+    "solved": "Gelöste Challenges",
+    "loading": "Bestenliste wird geladen…",
+    "empty": "Es wurden noch keine Challenges gelöst.",
+    "error": "Die Bestenliste konnte nicht geladen werden. Lade die Seite erneut, um es noch einmal zu versuchen."
   },
   "profile": {
     "memberSince": "Mitglied seit",

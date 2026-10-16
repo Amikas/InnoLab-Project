@@ -82,7 +82,9 @@ export async function getRecentSolves(limit: number = 10): Promise<ApiResult<Sol
 export async function getTopSolvers(limit: number = 10): Promise<ApiResult<LeaderboardEntry[]>> {
     try {
         const response = await apiClient.get<Record<string, number>>(`/api/solves/top-solvers?limit=${clampLimit(limit)}`)
-        return { success: true, data: Object.entries(response ?? {}).map(([username, solveCount]) => ({ username, solveCount: Number(solveCount) || 0 })) }
+        const entries = Object.entries(response ?? {}).map(([username, solveCount]) => ({ username, solveCount: Number(solveCount) || 0 }))
+        entries.sort((a, b) => b.solveCount - a.solveCount || a.username.localeCompare(b.username))
+        return { success: true, data: entries }
     } catch (error) {
         console.error('Error fetching top solvers:', error)
         return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch top solvers' }

@@ -30,17 +30,21 @@ describe('solves api', () => {
         expect(url).toContain('limit=5')
     })
 
-    it('top solvers map response to entries', async () => {
+    it('sorts top solvers by solve count and breaks ties by username', async () => {
         ;(global.fetch as any).mockResolvedValueOnce({
             ok: true,
             status: 200,
             headers: { get: (name: string) => name === 'Content-Type' ? 'application/json' : null },
-            json: async () => ({ alice: 3, bob: 1 }),
+            json: async () => ({ bob: 1, charlie: 3, alice: 3 }),
         } as any)
-        const res = await getTopSolvers(2)
+        const res = await getTopSolvers(3)
         expect(res.success).toBe(true)
-        expect(res.data).toEqual([{ username: 'alice', solveCount: 3 }, { username: 'bob', solveCount: 1 }])
+        expect(res.data).toEqual([
+            { username: 'alice', solveCount: 3 },
+            { username: 'charlie', solveCount: 3 },
+            { username: 'bob', solveCount: 1 },
+        ])
         const url = (global.fetch as any).mock.calls[0][0]
-        expect(url).toContain('limit=2')
+        expect(url).toContain('limit=3')
     })
 })
