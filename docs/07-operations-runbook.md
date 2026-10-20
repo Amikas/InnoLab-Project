@@ -312,7 +312,12 @@ The backend performs this sequence:
   - `-p <allocatedSSHPort>:22`
   - `--memory=512m`
   - `--cpus=1.0`
+  - `--pids-limit=256` (processes and threads together, per container)
   - `--tmpfs=/tmp:rw,noexec,nosuid,size=100m`
+
+The PID limit applies at container creation. Test any challenge that deliberately
+needs more than 256 tasks before changing this shared limit; it does not disable
+SUID executables or file capabilities used by intended exercises.
 
 ### 5.4 Terminal connection sequence
 
