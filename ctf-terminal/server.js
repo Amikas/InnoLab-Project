@@ -301,6 +301,7 @@ wss.on("connection", async (ws, req) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
+const HOST = process.env.TERMINAL_BIND_ADDRESS || '127.0.0.1';
+server.listen(PORT, HOST, () => {
     logger.info({ port: PORT }, 'CTF Terminal Gateway listening');
 });

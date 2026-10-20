@@ -16,4 +16,7 @@ USER root
 
 EXPOSE 3001
 
+# Containers must accept traffic from outside their own network namespace.
+ENV TERMINAL_BIND_ADDRESS=0.0.0.0
+
 CMD ["node", "server.js"]

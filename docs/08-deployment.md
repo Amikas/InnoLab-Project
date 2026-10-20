@@ -229,6 +229,29 @@ EnvironmentFile=/opt/ctf/ctf.env
 Restart=always
 ```
 
+### Native services behind Nginx
+
+Keep ports 8080 and 3001 on loopback when Nginx is their public entry point.
+For the backend, create `/opt/ctf/backend/config/application.properties` with:
+
+```properties
+server.address=127.0.0.1
+```
+
+Spring Boot loads this external file from its working directory; the deployment
+workflow replaces only `app.jar`, so the setting survives backend releases.
+The native terminal gateway defaults to `127.0.0.1`. Its Docker image and Compose
+service explicitly use `TERMINAL_BIND_ADDRESS=0.0.0.0` for container networking.
+An explicitly configured `TERMINAL_BIND_ADDRESS` overrides the native default.
+Include the gateway source change in the next release to preserve its binding.
+
+Before restarting either service, verify that deployed browser API requests use
+`/api/` and the terminal uses `/terminal/` through Nginx. Back up the gateway
+script and any existing external backend configuration, then restart and verify
+one service at a time. Check the website, `/api/health`, `/terminal/health`, the
+terminal WebSocket upgrade, and `ss -lnt` after each change. Keep rollback copies
+outside the deployment directories.
+
 ---
 
 ## Nginx Configuration

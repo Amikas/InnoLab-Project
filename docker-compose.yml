@@ -14,6 +14,7 @@ services:
       - ctf-network
     environment:
       - PORT=3001
+      - TERMINAL_BIND_ADDRESS=${TERMINAL_BIND_ADDRESS:-0.0.0.0}
       - USE_DOCKER_DNS=true
       # SECURITY: required env (fail-fast on missing - see server.js).
       - CTF_SSH_PASSWORD=${CTF_SSH_PASSWORD:?CTF_SSH_PASSWORD must be set in .env}
