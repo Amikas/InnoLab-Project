@@ -105,19 +105,38 @@ describe('Admin import/export card', () => {
 
     const file = new File(['content'], 'content.zip', { type: 'application/zip' })
     fireEvent.change(screen.getByLabelText('Import ZIP package'), { target: { files: [file] } })
-    fireEvent.click(screen.getByRole('button', { name: 'Preview package' }))
 
     const importButton = await screen.findByRole('button', { name: 'Import content' })
     expect(previewContent).toHaveBeenCalledWith(file)
     expect(importButton).toBeDisabled()
     expect(importContent).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('radio', { name: 'Update existing' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Replace' }))
     fireEvent.click(importButton)
 
     await waitFor(() => expect(importContent).toHaveBeenCalledWith(file, [{
       type: 'challenge', key: 'crypto-1', action: 'UPDATE',
     }]))
     expect(await screen.findByRole('status')).toHaveTextContent('updated 1 challenges')
+  })
+
+  it('auto-previews a dropped ZIP and rejects other file types', async () => {
+    vi.mocked(previewContent).mockResolvedValue({ challengeCount: 1, courseCount: 0, conflicts: [] })
+
+    render(<AdminImportExportPage />)
+    const dropzone = await screen.findByTestId('content-transfer-dropzone')
+
+    fireEvent.drop(dropzone, { dataTransfer: { files: [new File(['notes'], 'notes.txt', { type: 'text/plain' })] } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('not a ZIP package')
+    expect(previewContent).not.toHaveBeenCalled()
+    expect(screen.queryByText('notes.txt')).not.toBeInTheDocument()
+
+    const zip = new File(['content'], 'content.zip', { type: 'application/zip' })
+    fireEvent.drop(dropzone, { dataTransfer: { files: [zip] } })
+
+    await waitFor(() => expect(previewContent).toHaveBeenCalledWith(zip))
+    expect(await screen.findByText('Package preview')).toBeInTheDocument()
+    expect(screen.getByText('content.zip')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import content' })).toBeEnabled()
   })
 
   it.each([AdminDashboardPage, AdminImportExportPage])('does not load transfer content for non-admins (%#)', async (Page) => {
