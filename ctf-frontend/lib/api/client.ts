@@ -182,8 +182,9 @@ export class ApiClient {
     });
   }
 
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     return this.request<T>(endpoint, {
+      ...options,
       method: "GET",
     });
   }

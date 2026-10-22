@@ -111,6 +111,8 @@ at.fhtw.ctfbackend/
 | `/` | GET | Auth | List published courses |
 | `/{slug}` | GET | Auth | Get course by slug |
 
+> Course content is student-only. Both endpoints require a valid `auth_token` session; anonymous requests return `401`. The list only contains published courses, and the slug lookup filters on `isPublished = true`, so drafts are not reachable.
+
 ### HealthController (`/api`)
 | Path | Method | Auth | Purpose |
 |------|--------|------|---------|

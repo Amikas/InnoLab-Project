@@ -181,6 +181,8 @@ Get hint reveal status: which hints are revealed, when next unlocks.
 
 ## Courses
 
+Both endpoints require an authenticated session (`auth_token` cookie). Anonymous requests return `401`; there is no public course API.
+
 ### GET /api/courses
 List published courses.
 

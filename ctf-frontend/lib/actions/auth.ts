@@ -45,7 +45,19 @@ export async function logoutUser(): Promise<void> {
 
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies()
-  return cookieStore.has('auth_token')
+  const cookie = cookieStore.toString()
+  if (!cookie) {
+    return false
+  }
+
+  try {
+    // Presence alone is not enough: an expired/invalid token must not render
+    // protected server pages. The backend remains the source of truth.
+    await apiClient.get('/api/user/me', { headers: { Cookie: cookie } })
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function requireAuth() {

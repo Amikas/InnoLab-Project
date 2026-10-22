@@ -78,6 +78,8 @@ Visit `/scoreboard` to see:
 
 ## Courses
 
+Courses are available to signed-in users only. If you open `/courses` without a session, you are redirected to the login page.
+
 Visit `/courses` to browse educational course content. Courses are structured as:
 
 **Course → Modules → Lessons**

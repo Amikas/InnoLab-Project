@@ -1,4 +1,21 @@
 import { apiClient } from './client'
+import { cookies } from 'next/headers'
+
+/**
+ * Server components do not send browser cookies automatically. Courses are
+ * authenticated content, so forward the incoming session cookie to the API.
+ * At build time (generateStaticParams) there is no request scope; return
+ * undefined and let the request fail closed.
+ */
+async function authHeaders(): Promise<HeadersInit | undefined> {
+  try {
+    const cookieStore = await cookies()
+    const cookie = cookieStore.toString()
+    return cookie ? { Cookie: cookie } : undefined
+  } catch {
+    return undefined
+  }
+}
 
 export interface Lesson {
   id: number
@@ -57,7 +74,9 @@ export interface CourseListItem {
 
 export async function getAllCourses(): Promise<CourseListItem[]> {
   try {
-    const response = await apiClient.get<CourseListItem[]>('/api/courses')
+    const response = await apiClient.get<CourseListItem[]>('/api/courses', {
+      headers: await authHeaders(),
+    })
     return response
   } catch (error) {
     console.error('Failed to fetch courses:', error)
@@ -67,7 +86,9 @@ export async function getAllCourses(): Promise<CourseListItem[]> {
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
   try {
-    const response = await apiClient.get<Course>(`/api/courses/${slug}`)
+    const response = await apiClient.get<Course>(`/api/courses/${slug}`, {
+      headers: await authHeaders(),
+    })
     return response
   } catch (error) {
     console.error(`Failed to fetch course ${slug}:`, error)

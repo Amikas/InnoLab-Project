@@ -2,7 +2,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, BookOpen, Clock, Play } from "lucide-react"
-import { getCourseBySlug, getAllCourses, Course, Module, Lesson } from "@/lib/api/courses"
+import { getCourseBySlug, Course, Module, Lesson } from "@/lib/api/courses"
+import { requireAuth } from "@/lib/actions/auth"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -19,13 +20,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${course.title} | CTF Platform`,
     description: course.description || "Learn cybersecurity through structured courses",
   }
-}
-
-export async function generateStaticParams() {
-  const courses = await getAllCourses()
-  return courses.map((course) => ({
-    slug: course.slug,
-  }))
 }
 
 function getCourseColor(slug: string): string {
@@ -58,6 +52,7 @@ function formatDuration(minutes: number | null): string {
 }
 
 export default async function CourseDetailPage({ params }: Props) {
+  await requireAuth()
   const { slug } = await params
   const course = await getCourseBySlug(slug)
 

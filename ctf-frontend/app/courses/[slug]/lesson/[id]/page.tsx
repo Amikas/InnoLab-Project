@@ -14,6 +14,7 @@ import {
   Wrench
 } from "lucide-react"
 import { getCourseBySlug, Lesson } from "@/lib/api/courses"
+import { requireAuth } from "@/lib/actions/auth"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { extractAllHeadings, formatDuration } from "@/lib/lesson-utils"
 import LessonContent from "@/components/lesson-content"
@@ -43,20 +44,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const dynamic = 'force-dynamic'
 
-export async function generateStaticParams() {
-  const course = await getCourseBySlug("web-exploitation")
-  if (!course) return []
-  
-  const params: Array<{ slug: string; id: string }> = []
-  course.modules.forEach((module) => {
-    module.lessons.forEach((lesson) => {
-      params.push({ slug: "web-exploitation", id: lesson.id.toString() })
-    })
-  })
-  
-  return params
-}
-
 function findLesson(modules: any[], lessonId: number): Lesson | null {
   for (const mod of modules) {
     for (const lesson of mod.lessons) {
@@ -83,6 +70,7 @@ function getTotalLessons(modules: any[]): number {
 }
 
 export default async function LessonDetailPage({ params }: Props) {
+  await requireAuth()
   const { slug, id } = await params
   const course = await getCourseBySlug(slug)
   

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Clock, Target } from "lucide-react"
 import { getAllCourses, CourseListItem } from "@/lib/api/courses"
+import { requireAuth } from "@/lib/actions/auth"
 import { getLocale } from "@/lib/i18n/get-locale"
 import { getDictionary } from "@/lib/i18n/dictionaries"
 import { pickLocalized } from "@/lib/i18n/content"
@@ -34,6 +35,7 @@ function getCourseColor(slug: string): string {
 }
 
 export default async function CoursesPage() {
+  await requireAuth()
   const courses = await getAllCourses()
   const locale = await getLocale()
   const dict = getDictionary(locale)

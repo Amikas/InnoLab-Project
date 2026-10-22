@@ -16,9 +16,9 @@
 │   └── /challenges/[id]                       Challenge detail (auth guard)
 ├── /scoreboard                                Leaderboard
 ├── /profile                                   User profile (async, auth)
-├── /courses                                   Course catalogue
-│   └── /courses/[slug]                        Course detail with modules/lessons
-│       └── /courses/[slug]/lesson/[id]        Lesson content with code blocks
+├── /courses                                   Course catalogue (auth guard)
+│   └── /courses/[slug]                        Course detail with modules/lessons (auth guard)
+│       └── /courses/[slug]/lesson/[id]        Lesson content with code blocks (auth guard)
 ├── /cryptography                              Category page
 ├── /forensics                                 Category page
 ├── /web-exploitation                          Category page
@@ -101,6 +101,6 @@ Providers: `ThemeProvider` (class-based, system default), `AuthProvider` (React 
 
 ## Middleware
 
-`middleware.ts` is a passthrough — always calls `NextResponse.next()`. Authentication is validated via backend API (`/api/user/me`), not client-side cookie checks.
+`middleware.ts` is intentionally minimal. It redirects `/courses/*` to `/login` when the `auth_token` cookie is absent, but does not treat cookie presence as proof of authentication. Token validity is always decided by the backend API (`/api/user/me`), including in the server-side `requireAuth()` guard used by course pages.
 
-Runs on: `/challenges/:path*`, `/profile/:path*`, `/admin/:path*`, `/login`
+Runs on: `/challenges/:path*`, `/profile/:path*`, `/admin/:path*`, `/courses/:path*`, `/login`
