@@ -65,3 +65,30 @@ describe('apiClient', () => {
         expect(init.credentials).toBe('include')
     })
 })
+
+describe('download filename extraction', () => {
+    function mockBlobResponse(contentDisposition: string) {
+        ;(global.fetch as any).mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: {
+                get: (name: string) => name.toLowerCase() === 'content-disposition' ? contentDisposition : null,
+            },
+            blob: async () => new Blob(['zip-bytes'], { type: 'application/zip' }),
+        })
+    }
+
+    it.each([
+        ['attachment; filename="=?UTF-8?Q?innolab-content.zip?="; filename*=UTF-8\'\'innolab-content.zip', 'innolab-content.zip'],
+        ["attachment; filename*=UTF-8''caf%C3%A9.zip", 'café.zip'],
+        ['attachment; filename="=?UTF-8?Q?caf=C3=A9.zip?="', 'café.zip'],
+        ['attachment; filename="innolab-content(2).zip"', 'innolab-content(2).zip'],
+        ['attachment; filename="../../etc/passwd"', 'passwd'],
+    ])('parses %s', async (header, expected) => {
+        mockBlobResponse(header)
+
+        const { filename } = await apiClient.requestBlob('/api/admin/content-transfer/export', { method: 'POST' })
+
+        expect(filename).toBe(expected)
+    })
+})

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +31,7 @@ public class ContentTransferController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/zip"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                        .filename("innolab-content.zip", StandardCharsets.UTF_8).build().toString())
+                        .filename("innolab-content.zip").build().toString())
                 .contentLength(archive.length)
                 .body(archive);
     }

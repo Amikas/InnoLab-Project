@@ -19,31 +19,55 @@ const getApiBaseUrl = () => {
   return publicUrl || "";
 };
 
-// Helper function to extract filename from Content-Disposition header
+// Decode RFC 2047 encoded words (e.g. "=?UTF-8?Q?caf=C3=A9.zip?=") that some
+// servers still emit in Content-Disposition. Browsers do not decode these in a
+// download filename; "?" is also illegal in filenames, so it gets mangled.
+function decodeRfc2047(value: string): string {
+  return value.replace(/=\?([^?]+)\?([BQ])\?([^?]*)\?=/gi, (match, charset: string, encoding: string, text: string) => {
+    try {
+      const bytes = encoding.toUpperCase() === "B"
+        ? Uint8Array.from(atob(text), char => char.charCodeAt(0))
+        : Uint8Array.from(
+            [...text.replace(/_/g, " ").replace(/=([0-9A-F]{2})/gi, (_, hex: string) =>
+              String.fromCharCode(parseInt(hex, 16)))].map(char => char.charCodeAt(0)),
+          );
+      return new TextDecoder(charset).decode(bytes);
+    } catch {
+      return match;
+    }
+  });
+}
+
+function sanitizeFilename(value: string): string | null {
+  const cleaned = value.replace(/[\r\n]/g, "").split(/[\\/]/).pop()?.trim();
+  return cleaned && cleaned !== "." && cleaned !== ".." ? cleaned : null;
+}
+
+// Extract filename from Content-Disposition, preferring RFC 5987 filename*.
 function extractFilenameFromHeaders(headers: Headers): string | null {
   const contentDisposition = headers.get("Content-Disposition");
   if (!contentDisposition) return null;
 
-  // Try different patterns for filename extraction
-  const patterns = [
-    /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
-    /filename\*?=["']?([^"'\n]+)["']?/i,
-    /filename\*?=([^;\n]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const matches = contentDisposition.match(pattern);
-    if (matches && matches[1]) {
-      // Clean up the filename (remove quotes, handle UTF-8 encoding, etc.)
-      let filename = matches[1].replace(/['"]/g, "");
-
-      // Handle RFC 5987 encoded filenames (filename*=UTF-8''...)
-      if (filename.startsWith("UTF-8''")) {
-        filename = decodeURIComponent(filename.substring(7));
+  const extended = contentDisposition.match(/filename\*\s*=\s*(?:"([^"]*)"|([^;]*))/i);
+  if (extended) {
+    let value = (extended[1] ?? extended[2] ?? "").trim();
+    const encoded = value.match(/^([^']*)'[^']*'(.*)$/);
+    if (encoded) {
+      try {
+        value = decodeURIComponent(encoded[2]);
+      } catch {
+        value = encoded[2];
       }
-
-      return filename;
     }
+    const filename = sanitizeFilename(decodeRfc2047(value));
+    if (filename) return filename;
+  }
+
+  const simple = contentDisposition.match(/filename\s*=\s*(?:"((?:\\.|[^"\\])*)"|([^;]*))/i);
+  if (simple) {
+    const value = (simple[1] ?? simple[2] ?? "").replace(/\\(.)/g, "$1").trim();
+    const filename = sanitizeFilename(decodeRfc2047(value));
+    if (filename) return filename;
   }
 
   return null;
