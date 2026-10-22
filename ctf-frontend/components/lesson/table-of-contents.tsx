@@ -67,9 +67,15 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
     return null
   }
 
-  // Group headings by level
-  const h2Headings = headings.filter((h) => h.level === 2)
-  const h3Headings = headings.filter((h) => h.level === 3)
+  // Group headings by their position in the document, not by list index.
+  const groups = headings.reduce<Array<TocHeading & { children: TocHeading[] }>>((acc, heading) => {
+    if (heading.level === 2) {
+      acc.push({ ...heading, children: [] })
+    } else if (heading.level === 3 && acc.length > 0) {
+      acc[acc.length - 1].children.push(heading)
+    }
+    return acc
+  }, [])
 
   // Desktop TOC
   const DesktopTOC = () => (
@@ -77,7 +83,7 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
         {t('courses.onThisPage')}
       </p>
-      {h2Headings.map((heading) => (
+      {groups.map((heading) => (
         <div key={heading.id}>
           <button
             onClick={() => scrollToHeading(heading.id)}
@@ -90,27 +96,20 @@ export function TableOfContents({ headings, className }: TableOfContentsProps) {
           >
             {heading.text}
           </button>
-          {h3Headings
-            .filter((h) => {
-              const h2Index = h2Headings.findIndex((h2) => h2.id === heading.id)
-              const h3Index = h3Headings.findIndex((h3) => h3.id === h.id)
-              const nextH2Index = h2Headings.findIndex((h2, i) => i > h2Index && h2.level === 2)
-              return h3Index > h2Index && (nextH2Index === -1 || h3Index < nextH2Index)
-            })
-            .map((h3) => (
-              <button
-                key={h3.id}
-                onClick={() => scrollToHeading(h3.id)}
-                className={cn(
-                  'block w-full text-left py-1 pl-4 text-sm transition-colors cursor-pointer',
-                  activeId === h3.id
-                    ? 'text-primary font-medium'
-                    : 'text-muted-foreground/70 hover:text-foreground'
-                )}
-              >
-                {h3.text}
-              </button>
-            ))}
+          {heading.children.map((h3) => (
+            <button
+              key={h3.id}
+              onClick={() => scrollToHeading(h3.id)}
+              className={cn(
+                'block w-full text-left py-1 pl-4 text-sm transition-colors cursor-pointer',
+                activeId === h3.id
+                  ? 'text-primary font-medium'
+                  : 'text-muted-foreground/70 hover:text-foreground'
+              )}
+            >
+              {h3.text}
+            </button>
+          ))}
         </div>
       ))}
     </nav>
