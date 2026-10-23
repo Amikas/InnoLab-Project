@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
+import { useLocalePath } from "@/lib/i18n/use-locale";
 import { useAuth } from "@/lib/hooks/use-auth";
 
 /**
@@ -26,7 +27,8 @@ export default function RedirectIfAuthenticated({
   children: React.ReactNode;
 }) {
   const { auth, isLoading } = useAuth();
-  const router = useRouter();
+  const router = useRouter()
+  const withLocale = useLocalePath();
   const [hasResolved, setHasResolved] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function RedirectIfAuthenticated({
 
   useEffect(() => {
     if (!isLoading && auth.isAuthenticated) {
-      router.replace(auth.isAdmin ? "/admin" : "/challenges");
+      router.replace(withLocale(auth.isAdmin ? "/admin" : "/challenges"));
     }
   }, [auth.isAuthenticated, auth.isAdmin, isLoading, router]);
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import Link from "@/components/localized-link"
 import { Search } from "lucide-react"
 import type { Challenge } from "@/lib/types"
 import { useTranslation } from "react-i18next"

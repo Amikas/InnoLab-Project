@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import AdminDashboardPage from '@/app/admin/page'
-import AdminImportExportPage from '@/app/admin/import-export/page'
+import AdminDashboardPage from '@/app/[locale]/admin/page'
+import AdminImportExportPage from '@/app/[locale]/admin/import-export/page'
 import { getAdminStats, getAllCoursesAdmin } from '@/lib/api/admin'
 import { getAllChallenges } from '@/lib/api/challenges'
 import { exportContent, importContent, previewContent } from '@/lib/api/content-transfer'
@@ -14,7 +14,7 @@ const { authState, router } = vi.hoisted(() => ({
   router: { push: vi.fn() },
 }))
 
-vi.mock('next/navigation', () => ({ useRouter: () => router }))
+vi.mock('next/navigation', () => ({ useRouter: () => router, usePathname: () => '/en/admin/import-export' }))
 vi.mock('@/lib/hooks/use-auth', () => ({ useAuth: () => authState }))
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
 vi.mock('@/lib/api/admin', () => ({ getAdminStats: vi.fn(), getAllCoursesAdmin: vi.fn() }))
@@ -55,7 +55,7 @@ afterEach(() => {
 })
 
 describe('Admin import/export card', () => {
-  it('places working controls above the category breakdown instead of a header link', async () => {
+  it('renders the working controls below the breakdowns instead of a header link', async () => {
     const createObjectURL = vi.fn(() => 'blob:content')
     const revokeObjectURL = vi.fn()
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
@@ -67,10 +67,12 @@ describe('Admin import/export card', () => {
 
     const heading = await screen.findByRole('heading', { name: 'admin.importExport', level: 2 })
     const categoryHeading = screen.getByRole('heading', { name: 'admin.byCategory', level: 2 })
-    expect(heading.compareDocumentPosition(categoryHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const difficultyHeading = screen.getByRole('heading', { name: 'admin.byDifficulty', level: 2 })
+    expect(heading.compareDocumentPosition(categoryHeading) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+    expect(heading.compareDocumentPosition(difficultyHeading) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Export', level: 3 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Import', level: 3 })).toBeInTheDocument()
-    expect(document.querySelector('a[href="/admin/import-export"]')).toBeNull()
+    expect(document.querySelector('a[href="/en/admin/import-export"]')).toBeNull()
 
     fireEvent.click(await screen.findByRole('radio', { name: 'Selected items' }))
     const download = screen.getByRole('button', { name: 'Download ZIP' })
@@ -100,7 +102,7 @@ describe('Admin import/export card', () => {
     render(<AdminImportExportPage />)
 
     expect(screen.getByRole('heading', { name: 'Content import and export', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Back to admin' })).toHaveAttribute('href', '/admin')
+    expect(screen.getByRole('link', { name: 'Back to admin' })).toHaveAttribute('href', '/en/admin')
     await waitFor(() => expect(screen.getByRole('button', { name: 'Download ZIP' })).toBeEnabled())
 
     const file = new File(['content'], 'content.zip', { type: 'application/zip' })
@@ -144,7 +146,7 @@ describe('Admin import/export card', () => {
 
     render(<Page />)
 
-    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/'))
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/en'))
     expect(getAllChallenges).not.toHaveBeenCalled()
     expect(getAllCoursesAdmin).not.toHaveBeenCalled()
     expect(screen.queryByRole('region', { name: 'admin.importExport' })).not.toBeInTheDocument()

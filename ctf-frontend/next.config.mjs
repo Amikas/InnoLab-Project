@@ -1,6 +1,6 @@
 const nextConfig = {
   output: 'standalone',
-  trailingSlash: true,
+  trailingSlash: false,
   reactStrictMode: true,
   typescript: { ignoreBuildErrors: true },
   images: { unoptimized: true },

@@ -99,7 +99,8 @@
     "a6": "No sharing of flags, no attacking the platform infrastructure, and be respectful to others.",
     "contactHeading": "Contact Us",
     "contactText": "Have a question? Reach out to our support team.",
-    "contactNote": "We typically respond within 24 hours."
+    "contactNote": "We typically respond within 24 hours.",
+    "metaDesc": "Get help and support for the CTF platform"
   },
   "login": {
     "metaTitle": "Login | CTF Platform",

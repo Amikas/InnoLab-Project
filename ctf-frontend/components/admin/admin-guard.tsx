@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
+import { useLocalePath } from '@/lib/i18n/use-locale';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
   const { auth, isLoading } = useAuth(); // Changed from 'user' to 'auth'
-  const router = useRouter();
+  const router = useRouter()
+  const withLocale = useLocalePath();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
       if (!auth.isAuthenticated || !auth.isAdmin) { // Fixed property access
         // Redirect non-admin users to home page
-        router.push('/');
+        router.push(withLocale('/'));
       } else {
         setIsAuthorized(true);
       }

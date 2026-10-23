@@ -378,7 +378,7 @@ export default function ContentTransfer() {
               {preview.conflicts.length === 0 ? (
                 <p className="flex items-start gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" aria-hidden />
-                  <span>No matching IDs or slugs exist here — every item will be added.</span>
+                  <span>No matching IDs or slugs exist here, every item will be added.</span>
                 </p>
               ) : <>
                 <p className="text-sm text-muted-foreground">

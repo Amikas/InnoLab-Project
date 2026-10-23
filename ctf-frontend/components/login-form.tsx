@@ -3,7 +3,8 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { useLocalePath } from "@/lib/i18n/use-locale"
+import Link from "@/components/localized-link"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -11,6 +12,7 @@ import { useTranslation } from "react-i18next"
 export default function LoginForm() {
     const { t } = useTranslation()
     const router = useRouter()
+  const withLocale = useLocalePath()
     const { login, isLoading } = useAuth()
     const [error, setError] = useState("")
 
@@ -32,9 +34,9 @@ export default function LoginForm() {
                 const isAdmin = result.data?.isAdmin || false
 
                 if (isAdmin) {
-                    router.push("/admin")
+                    router.push(withLocale("/admin"))
                 } else {
-                    router.push("/challenges")
+                    router.push(withLocale("/challenges"))
                 }
                 router.refresh()
             } else {

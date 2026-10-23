@@ -1,7 +1,8 @@
 "use client"
 
-import Link from "next/link"
+import Link from "@/components/localized-link"
 import { usePathname, useRouter } from "next/navigation"
+import { useLocalePath } from "@/lib/i18n/use-locale"
 import { useState } from "react"
 import { User, Menu, X, Flag, Shield } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const withLocale = useLocalePath()
   const { auth, logout } = useAuth()
 
   const navLinks = [
@@ -30,7 +32,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout()
     setMobileMenuOpen(false)
-    router.push("/")
+    router.push(withLocale("/"))
     router.refresh()
   }
 

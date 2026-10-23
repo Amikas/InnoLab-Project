@@ -93,8 +93,13 @@ export class ApiClient {
 
     // Forward the current UI locale so the backend can return
     // localized content (title/description) with English fallback.
-    if (!headers.has("Accept-Language") && typeof navigator !== "undefined") {
-      const lang = navigator.language?.split("-")[0];
+    if (!headers.has("Accept-Language")) {
+      // The URL locale (mirrored on <html lang>) wins over the browser
+      // language so the backend answers in the language the page shows.
+      const source =
+        (typeof document !== "undefined" ? document.documentElement.lang : "") ||
+        (typeof navigator !== "undefined" ? navigator.language : "");
+      const lang = source.split("-")[0].toLowerCase();
       if (lang === "de" || lang === "en") headers.set("Accept-Language", lang);
     }
 

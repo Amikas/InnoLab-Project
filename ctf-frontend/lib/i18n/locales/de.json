@@ -99,7 +99,8 @@
     "a6": "Kein Teilen von Flags, keine Angriffe auf die Plattforminfrastruktur und ein respektvoller Umgang miteinander.",
     "contactHeading": "Kontaktieren Sie uns",
     "contactText": "Haben Sie eine Frage? Wenden Sie sich an unser Support-Team.",
-    "contactNote": "Wir antworten in der Regel innerhalb von 24 Stunden."
+    "contactNote": "Wir antworten in der Regel innerhalb von 24 Stunden.",
+    "metaDesc": "Erhalten Sie Hilfe und Unterstützung für die CTF-Plattform"
   },
   "login": {
     "metaTitle": "Anmelden | CTF-Plattform",

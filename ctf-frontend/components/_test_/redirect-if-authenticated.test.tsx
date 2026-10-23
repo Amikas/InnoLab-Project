@@ -17,6 +17,7 @@ const { replaceMock, routerMock, authState } = vi.hoisted(() => {
 
 vi.mock('next/navigation', () => ({
   useRouter: () => routerMock,
+  usePathname: () => '/en',
 }))
 
 vi.mock('@/lib/hooks/use-auth', () => ({
@@ -80,7 +81,7 @@ describe('RedirectIfAuthenticated', () => {
     authState.auth = { isAuthenticated: true, isAdmin: false }
     renderGuestPage()
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/challenges'))
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/en/challenges'))
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 
@@ -88,7 +89,7 @@ describe('RedirectIfAuthenticated', () => {
     authState.auth = { isAuthenticated: true, isAdmin: true }
     renderGuestPage()
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/admin'))
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/en/admin'))
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 
@@ -108,7 +109,7 @@ describe('RedirectIfAuthenticated', () => {
       </RedirectIfAuthenticated>,
     )
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/admin'))
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith('/en/admin'))
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 
