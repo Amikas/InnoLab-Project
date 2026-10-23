@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import type { LoginCredentials, ApiResult } from '@/lib/types'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { resolveLocale } from '@/lib/i18n/config'
 
 export async function loginUser(formData: FormData): Promise<ApiResult> {
   try {
@@ -60,9 +61,9 @@ export async function isAuthenticated(): Promise<boolean> {
   }
 }
 
-export async function requireAuth() {
+export async function requireAuth(locale?: string) {
   const authenticated = await isAuthenticated()
   if (!authenticated) {
-    redirect('/login')
+    redirect(`/${resolveLocale(locale)}/login`)
   }
 }

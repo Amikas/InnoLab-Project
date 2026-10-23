@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import Link from "@/components/localized-link"
 import { useAuth } from "@/lib/hooks/use-auth"
 import { useTranslation } from "react-i18next"
 

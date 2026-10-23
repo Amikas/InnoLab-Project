@@ -2,11 +2,35 @@ import { describe, it, expect } from "vitest";
 import en from "@/lib/i18n/locales/en.json";
 import de from "@/lib/i18n/locales/de.json";
 import { pickLocalized, normalizeLocale, getLocalizedArray } from "@/lib/i18n/content";
-import { resolveLocale } from "@/lib/i18n/config";
+import {
+  localeFromPathname,
+  localePath,
+  resolveLocale,
+} from "@/lib/i18n/config";
+
+function flatten(value: unknown, prefix = ""): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (child && typeof child === "object") Object.assign(out, flatten(child, path));
+    else out[path] = String(child);
+  }
+  return out;
+}
+
+const enKeys = flatten(en);
+const deKeys = flatten(de);
 
 describe("i18n dictionaries", () => {
-  it("en and de have the same top-level namespaces", () => {
-    expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
+  it("en and de expose exactly the same keys", () => {
+    expect(Object.keys(deKeys).sort()).toEqual(Object.keys(enKeys).sort());
+  });
+
+  it("has no empty German values", () => {
+    const empty = Object.entries(deKeys)
+      .filter(([, value]) => value.trim() === "")
+      .map(([key]) => key);
+    expect(empty).toEqual([]);
   });
 
   it("nav/footer/home/cta/login keys are translated (not identical to English)", () => {
@@ -27,6 +51,22 @@ describe("locale helpers", () => {
     expect(resolveLocale("en-US")).toBe("en");
     expect(resolveLocale(null)).toBe("en");
     expect(resolveLocale("fr")).toBe("en");
+  });
+
+  it("reads the locale from the first path segment", () => {
+    expect(localeFromPathname("/de/challenges")).toBe("de");
+    expect(localeFromPathname("/en/courses/owasp")).toBe("en");
+    expect(localeFromPathname("/challenges")).toBe("en");
+    expect(localeFromPathname(null)).toBe("en");
+  });
+
+  it("prefixes and re-prefixes internal paths without touching external URLs", () => {
+    expect(localePath("de", "/challenges")).toBe("/de/challenges");
+    expect(localePath("en", "/de/challenges")).toBe("/en/challenges");
+    expect(localePath("de", "/")).toBe("/de");
+    expect(localePath("de", "/help#faq")).toBe("/de/help#faq");
+    expect(localePath("de", "https://example.org")).toBe("https://example.org");
+    expect(localePath("de", "mailto:test@example.org")).toBe("mailto:test@example.org");
   });
 
   it("picks German content with English fallback", () => {

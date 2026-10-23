@@ -1,10 +1,9 @@
-import Link from "next/link"
+import Link from "@/components/localized-link"
 import { Github, Mail, Flag } from "lucide-react"
-import { getLocale } from "@/lib/i18n/get-locale"
 import { getDictionary } from "@/lib/i18n/dictionaries"
+import type { SupportedLocale } from "@/lib/i18n/config"
 
-export default async function Footer() {
-  const locale = await getLocale()
+export default async function Footer({ locale }: { locale: SupportedLocale }) {
   const dict = getDictionary(locale)
   const currentYear = new Date().getFullYear()
 
