@@ -26,3 +26,5 @@ repomix.config.json
 .freebuff/
 opencode.json
 ctf-backend/logs/
+.dev/
+scripts/
