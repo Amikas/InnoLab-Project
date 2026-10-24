@@ -27,7 +27,7 @@ Navigate to `/admin` and use the **Add Challenge** form:
 | Difficulty | Yes | easy, medium, or hard |
 | Points | Yes | Score value |
 | Flag | No | Static flag (leave blank for instance-based) |
-| Download File | No | ZIP or other attachment |
+| Download File | No | Any attachment; the download is named after the challenge title |
 | Requires Instance | No | Check for dynamic container challenges |
 | Docker Files | No | Upload Dockerfile + entrypoint.sh for instance challenges |
 | Hints | No | Array of hint strings (revealed sequentially) |

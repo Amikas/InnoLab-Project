@@ -1,5 +1,7 @@
 package at.fhtw.ctfbackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
 /** Versioned, environment-independent content format stored inside a ZIP file. */
@@ -12,10 +14,11 @@ public record ContentTransferPackage(
 
     public record Category(String id, String name, String summary, String nameDe, String summaryDe, String fileUrl) { }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Challenge(
             String id, String title, String titleDe, String description, String descriptionDe,
             String category, String difficulty, Integer points, String flag, boolean requiresInstance,
-            String originalFilename, String hintsJson, String hintsJsonDe, String dockerFilesJson,
+            String downloadExtension, String hintsJson, String hintsJsonDe, String dockerFilesJson,
             String downloadAsset, List<String> contextAssets) { }
 
     public record Course(

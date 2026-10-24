@@ -15,7 +15,6 @@ public class ChallengeDto {
     private String difficulty;
     private Integer points;
     private String downloadUrl;
-    private String originalFilename;
     private Boolean solved = false;
     private Boolean requiresInstance = false;
     private String[] hints;
@@ -25,7 +24,7 @@ public class ChallengeDto {
 
     public ChallengeDto(String id, String title, String description,
                         String category, String difficulty, Integer points,
-                        String downloadUrl, String originalFilename) {
+                        String downloadUrl) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -33,42 +32,5 @@ public class ChallengeDto {
         this.difficulty = difficulty;
         this.points = points;
         this.downloadUrl = downloadUrl;
-        this.originalFilename = originalFilename;
-    }
-
-    public ChallengeDto(String id, String title, String description,
-                        String category, String difficulty, Integer points,
-                        String downloadUrl, String originalFilename,
-                        Boolean requiresInstance) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.category = category;
-        this.difficulty = difficulty;
-        this.points = points;
-        this.downloadUrl = downloadUrl;
-        this.originalFilename = originalFilename;
-        this.requiresInstance = requiresInstance != null ? requiresInstance : false;
-    }
-
-    public ChallengeDto(String id, String title, String description,
-                        String category, String difficulty, Integer points,
-                        String downloadUrl, String originalFilename,
-                        Boolean requiresInstance,
-                        String challengeFolderPath,
-                        String dockerFilesJson,
-                        String[] hints) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.category = category;
-        this.difficulty = difficulty;
-        this.points = points;
-        this.downloadUrl = downloadUrl;
-        this.originalFilename = originalFilename;
-        this.requiresInstance = requiresInstance != null ? requiresInstance : false;
-        this.challengeFolderPath = challengeFolderPath;
-        this.dockerFilesJson = dockerFilesJson;
-        this.hints = hints;
     }
 }

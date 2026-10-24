@@ -7,6 +7,7 @@ import at.fhtw.ctfbackend.repository.ChallengeRepository;
 import at.fhtw.ctfbackend.repository.HintRevealRepository;
 import at.fhtw.ctfbackend.repository.SolveRepository;
 import at.fhtw.ctfbackend.repository.UserRepository;
+import at.fhtw.ctfbackend.util.FileExtensions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,13 +60,31 @@ public class ChallengeService {
     }
 
     /**
-     * Load the file bytes for a given challenge.
+     * Load the download content and the filename the browser should receive.
      */
     @Transactional(readOnly = true)
-    public byte[] getFile(String challengeId) {
-        return repo.findById(challengeId)
-                .map(ChallengeEntity::getDownloadZip)
+    public DownloadFile getDownload(String challengeId) {
+        ChallengeEntity entity = repo.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge not found: " + challengeId));
+
+        byte[] content = entity.getDownloadFile();
+        if (content == null || content.length == 0) {
+            return new DownloadFile(content, null);
+        }
+
+        String extension = FileExtensions.normalize(entity.getDownloadExtension());
+        if (extension == null) {
+            extension = FileExtensions.detect(content);
+        }
+        String slug = slugify(entity.getTitle());
+        if (slug.isEmpty()) {
+            slug = entity.getId();
+        }
+        return new DownloadFile(content, slug + "." + extension);
+    }
+
+    /** Download payload plus the title-derived filename. */
+    public record DownloadFile(byte[] content, String filename) {
     }
 
     @Transactional
@@ -105,24 +125,11 @@ public class ChallengeService {
 
         // Save download file if provided
         byte[] downloadBytes = null;
-        String originalFilename = null;
+        String downloadExtension = null;
         if (downloadFile != null && !downloadFile.isEmpty()) {
             downloadBytes = downloadFile.getBytes();
-            originalFilename = downloadFile.getOriginalFilename();
-
-            // Also save download file to challenge folder - USING FIXED VERSION
-            String filesPath = fileStorageService.getChallengeBasePath(challengeId) + "/files";
-            Path filesDir = Paths.get(filesPath);
-            if (!Files.exists(filesDir)) {
-                Files.createDirectories(filesDir);
-            }
-
-            Path downloadFilePath = filesDir.resolve(originalFilename);
-
-            // Use InputStream instead of transferTo to avoid path issues
-            try (InputStream inputStream = downloadFile.getInputStream()) {
-                Files.copy(inputStream, downloadFilePath, StandardCopyOption.REPLACE_EXISTING);
-            }
+            downloadExtension = FileExtensions.forUpload(downloadFile.getOriginalFilename(), downloadBytes);
+            fileStorageService.saveDownloadFile(challengeId, downloadExtension, downloadBytes);
         }
 
         // Handle null flag - provide empty string if null
@@ -138,7 +145,8 @@ public class ChallengeService {
                 .category(category)
                 .difficulty(difficulty)
                 .points(points)
-                .downloadZip(downloadBytes)
+                .downloadFile(downloadBytes)
+                .downloadExtension(downloadExtension)
                 .flag(safeFlag)
                 .build();
 
@@ -152,11 +160,6 @@ public class ChallengeService {
                 filesMap.put(fileName, getFileType(fileName));
             }
             entity.setDockerFilesJson(objectMapper.writeValueAsString(filesMap));
-        }
-
-        // Only set filename if provided
-        if (originalFilename != null) {
-            entity.setOriginalFilename(originalFilename);
         }
 
         // Set other optional fields
@@ -226,17 +229,10 @@ public class ChallengeService {
         // Handle download file update
         if (downloadFile != null && !downloadFile.isEmpty()) {
             byte[] downloadBytes = downloadFile.getBytes();
-            existingEntity.setDownload(downloadBytes);
-            existingEntity.setOriginalFilename(downloadFile.getOriginalFilename());
-
-            // Save to challenge folder
-            String filesPath = existingEntity.getChallengeFolderPath() + "/files";
-            Path filesDir = Paths.get(filesPath);
-            if (!Files.exists(filesDir)) {
-                Files.createDirectories(filesDir);
-            }
-            Path downloadFilePath = filesDir.resolve(downloadFile.getOriginalFilename());
-            downloadFile.transferTo(downloadFilePath.toFile());
+            String downloadExtension = FileExtensions.forUpload(downloadFile.getOriginalFilename(), downloadBytes);
+            existingEntity.setDownloadFile(downloadBytes);
+            existingEntity.setDownloadExtension(downloadExtension);
+            fileStorageService.saveDownloadFile(id, downloadExtension, downloadBytes);
         }
 
         // Handle Docker files update
@@ -375,20 +371,13 @@ public class ChallengeService {
                 .orElseThrow(() -> new ChallengeNotFoundException(id));
     }
 
-    @Transactional(readOnly = true)
-    public String getOriginalFilename(String challengeId) {
-        ChallengeEntity entity = repo.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge not found: " + challengeId));
-        return entity.getOriginalFilename();
-    }
-
     private ChallengeDto toDto(ChallengeEntity e) {
         if (e.getId() == null) {
             throw new IllegalStateException("Entity has no ID — cannot map to DTO");
         }
 
         String downloadUrl = null;
-        if (e.getDownloadZip() != null && e.getDownloadZip().length > 0) {
+        if (e.getDownloadFile() != null && e.getDownloadFile().length > 0) {
             downloadUrl = "http://localhost:8080/api/challenges/" + e.getId() + "/download";
         }
 
@@ -399,8 +388,7 @@ public class ChallengeService {
                 e.getCategory(),
                 e.getDifficulty(),
                 e.getPoints(),
-                downloadUrl,
-                e.getOriginalFilename()
+                downloadUrl
         );
 
         challenge.setRequiresInstance(e.isRequiresInstance());
@@ -430,6 +418,27 @@ public class ChallengeService {
         }
 
         return challenge;
+    }
+
+    /**
+     * Turn a challenge title into a safe, readable download name.
+     */
+    private static String slugify(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT)
+                .replace("ä", "ae")
+                .replace("ö", "oe")
+                .replace("ü", "ue")
+                .replace("ß", "ss");
+        normalized = java.text.Normalizer.normalize(normalized, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        String slug = normalized.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+        if (slug.length() > 100) {
+            slug = slug.substring(0, 100).replaceAll("-+$", "");
+        }
+        return slug;
     }
 
     /**

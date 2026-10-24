@@ -607,7 +607,7 @@ export default function AddChallengeForm() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Upload files for static challenges (zip, pdf, etc.)
+                            Upload the downloadable file for static challenges (ZIP, PDF, TXT, etc.)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

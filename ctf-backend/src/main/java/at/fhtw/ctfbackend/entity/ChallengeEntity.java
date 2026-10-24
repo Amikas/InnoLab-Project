@@ -26,9 +26,12 @@ public class ChallengeEntity {
     private Integer points;
 
     @Lob
-    private byte[] downloadZip;
+    private byte[] downloadFile;
 
-    private String originalFilename;
+    /** Server-derived download extension (no dot), e.g. zip, pdf, txt. */
+    @Column(length = 16)
+    private String downloadExtension;
+
     private boolean requiresInstance;
     private String flag;
 
@@ -52,12 +55,4 @@ public class ChallengeEntity {
     /** German hints as JSON array (optional, falls back to hintsJson). */
     @Column(columnDefinition = "TEXT")
     private String hintsJsonDe;
-
-    public byte[] getDownload() {
-        return downloadZip;
-    }
-
-    public void setDownload(byte[] download) {
-        this.downloadZip = download;
-    }
 }

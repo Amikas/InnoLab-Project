@@ -3,6 +3,7 @@ package at.fhtw.ctfbackend.services;
 import at.fhtw.ctfbackend.dto.ContentTransferPackage;
 import at.fhtw.ctfbackend.entity.*;
 import at.fhtw.ctfbackend.repository.*;
+import at.fhtw.ctfbackend.util.FileExtensions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,8 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class ContentTransferService {
     private static final String FORMAT = "innolab-content";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
+    private static final int MIN_SUPPORTED_VERSION = 1;
     private static final long MAX_EXPANDED_BYTES = 45L * 1024 * 1024;
     private static final int MAX_ARCHIVE_ENTRIES = 3000;
 
@@ -203,24 +205,34 @@ public class ContentTransferService {
             }
         }
         String downloadAsset = null;
-        if (entity.getDownloadZip() != null) {
-            String contextDownload = null;
-            if (entity.getOriginalFilename() != null && !entity.getOriginalFilename().contains("/")
-                    && !entity.getOriginalFilename().contains("\\")) {
-                contextDownload = "assets/challenges/" + entity.getId() + "/files/" + entity.getOriginalFilename();
+        String downloadExtension = null;
+        byte[] downloadBytes = entity.getDownloadFile();
+        if (downloadBytes != null && downloadBytes.length > 0) {
+            String declared = FileExtensions.normalize(entity.getDownloadExtension());
+            downloadExtension = declared != null ? declared : FileExtensions.detect(downloadBytes);
+
+            String filesPrefix = "assets/challenges/" + entity.getId() + "/files/";
+            for (String path : contextAssets) {
+                if (path.startsWith(filesPrefix) && Arrays.equals(assets.get(path), downloadBytes)) {
+                    downloadAsset = path;
+                    break;
+                }
             }
-            if (contextDownload != null && contextAssets.contains(contextDownload)
-                    && Arrays.equals(assets.get(contextDownload), entity.getDownloadZip())) {
-                downloadAsset = contextDownload;
-            } else {
-                downloadAsset = "assets/downloads/" + entity.getId() + ".bin";
-                putAsset(assets, downloadAsset, entity.getDownloadZip());
+            if (downloadAsset == null) {
+                downloadAsset = "assets/downloads/" + entity.getId() + "." + downloadExtension;
+                putAsset(assets, downloadAsset, downloadBytes);
+            } else if (declared == null) {
+                String fromAsset = FileExtensions.fromFilename(downloadAsset);
+                if (fromAsset != null && !"bin".equals(fromAsset)) {
+                    downloadExtension = fromAsset;
+                }
             }
         }
         return new ContentTransferPackage.Challenge(entity.getId(), entity.getTitle(), entity.getTitleDe(),
                 entity.getDescription(), entity.getDescriptionDe(), entity.getCategory(), entity.getDifficulty(),
-                entity.getPoints(), entity.isRequiresInstance() ? null : entity.getFlag(), entity.isRequiresInstance(), entity.getOriginalFilename(),
-                entity.getHintsJson(), entity.getHintsJsonDe(), entity.getDockerFilesJson(), downloadAsset, contextAssets);
+                entity.getPoints(), entity.isRequiresInstance() ? null : entity.getFlag(), entity.isRequiresInstance(),
+                downloadExtension, entity.getHintsJson(), entity.getHintsJsonDe(), entity.getDockerFilesJson(),
+                downloadAsset, contextAssets);
     }
 
     private ContentTransferPackage.Course exportCourse(CourseEntity course) {
@@ -298,7 +310,8 @@ public class ContentTransferService {
     }
 
     private void validatePackage(ContentTransferPackage content, Map<String, byte[]> assets) {
-        if (content == null || !FORMAT.equals(content.format()) || content.version() != VERSION) {
+        if (content == null || !FORMAT.equals(content.format())
+                || content.version() < MIN_SUPPORTED_VERSION || content.version() > VERSION) {
             throw new IllegalArgumentException("Unsupported content package format or version.");
         }
         Set<String> challengeIds = new HashSet<>();
@@ -310,8 +323,13 @@ public class ContentTransferService {
                 throw new IllegalArgumentException("Dynamic challenge ID is not supported by the environment service: " + challenge.id());
             }
             if (!challengeIds.add(challenge.id())) throw new IllegalArgumentException("Duplicate challenge ID: " + challenge.id());
+            if (challenge.downloadExtension() != null
+                    && FileExtensions.normalize(challenge.downloadExtension()) == null) {
+                throw new IllegalArgumentException("Invalid download extension for challenge: " + challenge.id());
+            }
             if (challenge.downloadAsset() != null) {
-                if (!challenge.downloadAsset().equals("assets/downloads/" + challenge.id() + ".bin")
+                String downloadPrefix = "assets/downloads/" + challenge.id() + ".";
+                if (!challenge.downloadAsset().startsWith(downloadPrefix)
                         && !safeList(challenge.contextAssets()).contains(challenge.downloadAsset())) {
                     throw new IllegalArgumentException("Invalid download asset reference.");
                 }
@@ -418,6 +436,23 @@ public class ContentTransferService {
                     Files.createDirectories(file.getParent());
                     Files.write(file, assets.get(path), StandardOpenOption.CREATE_NEW);
                 }
+                if (challenge.downloadAsset() != null && challenge.downloadAsset().startsWith("assets/downloads/")) {
+                    byte[] data = assets.get(challenge.downloadAsset());
+                    String filesPrefix = "assets/challenges/" + challenge.id() + "/files/";
+                    boolean alreadyStored = safeList(challenge.contextAssets()).stream()
+                            .filter(path -> path.startsWith(filesPrefix))
+                            .anyMatch(path -> Arrays.equals(assets.get(path), data));
+                    if (data != null && !alreadyStored) {
+                        String extension = FileExtensions.forStored(
+                                challenge.downloadExtension(), challenge.downloadAsset(), data);
+                        Path file = staged.resolve("files").resolve(challenge.id() + "." + extension).normalize();
+                        if (!file.startsWith(staged)) throw new IllegalArgumentException("Invalid challenge asset path.");
+                        Files.createDirectories(file.getParent());
+                        if (!Files.exists(file)) {
+                            Files.write(file, data, StandardOpenOption.CREATE_NEW);
+                        }
+                    }
+                }
             }
             for (FolderSwap swap : swaps) {
                 if (Files.exists(swap.target(), LinkOption.NOFOLLOW_LINKS)) move(swap.target(), swap.backup());
@@ -447,9 +482,12 @@ public class ContentTransferService {
         entity.setCategory(item.category()); entity.setDifficulty(item.difficulty()); entity.setPoints(item.points());
         entity.setRequiresInstance(item.requiresInstance());
         entity.setFlag(item.requiresInstance() ? null : item.flag());
-        entity.setOriginalFilename(item.originalFilename()); entity.setHintsJson(item.hintsJson());
+        byte[] downloadBytes = item.downloadAsset() == null ? null : assets.get(item.downloadAsset());
+        entity.setDownloadFile(downloadBytes);
+        entity.setDownloadExtension(downloadBytes == null ? null
+                : FileExtensions.forStored(item.downloadExtension(), item.downloadAsset(), downloadBytes));
+        entity.setHintsJson(item.hintsJson());
         entity.setHintsJsonDe(item.hintsJsonDe()); entity.setDockerFilesJson(item.dockerFilesJson());
-        entity.setDownloadZip(item.downloadAsset() == null ? null : assets.get(item.downloadAsset()));
     }
 
     private void applyCourse(ContentTransferPackage.Course item, CourseEntity course, boolean exists) {

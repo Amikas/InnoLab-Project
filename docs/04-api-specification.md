@@ -45,14 +45,14 @@ List all challenges.
 
 ```json
 // Response 200
-[{ "id": "web-101-1234567890", "title": "Basic Web Exploit", "description": "...", "category": "web-exploitation", "difficulty": "easy", "points": 100, "downloadUrl": ".../download", "originalFilename": "web-101.zip", "requiresInstance": false, "hints": ["Check HTML source"] }]
+[{ "id": "web-101-1234567890", "title": "Basic Web Exploit", "description": "...", "category": "web-exploitation", "difficulty": "easy", "points": 100, "downloadUrl": ".../download", "requiresInstance": false, "hints": ["Check HTML source"] }]
 ```
 
 ### GET /api/challenges/{id}
 Get single challenge detail.
 
 ### GET /api/challenges/{id}/download
-Download challenge attachment file (binary).
+Download challenge attachment file (binary). The response `Content-Disposition` filename is derived from the challenge title plus the stored file extension (for example `hidden-in-source.pdf`).
 
 ### POST /api/challenges (Admin)
 Create challenge. `multipart/form-data`.

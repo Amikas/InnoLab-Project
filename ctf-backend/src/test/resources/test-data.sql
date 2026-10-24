@@ -26,7 +26,7 @@ INSERT INTO file_entity (id, file_name, content) VALUES
 -- =====================================================================
 -- CHALLENGE DATA
 -- =====================================================================
-INSERT INTO challenges (id, title, description, category, difficulty, points, download_zip, flag) VALUES
+INSERT INTO challenges (id, title, description, category, difficulty, points, download_file, flag) VALUES
                                                                                                       ('web-101', 'Intro to Web Exploitation', 'Basic XSS challenge for beginners.', 'web', 'EASY', 100, decode('504b0304', 'hex'), 'flag{leet_xss}'),
                                                                                                       ('crypto-rsa-ct', 'RSA: Common Modulus', 'Two ciphertexts, one modulus, different exponents. Recover the message.', 'crypto', 'HARD', 400, decode('504b0304', 'hex'), 'CTF{BEZOUT_TO_THE_RESQUE}');
 

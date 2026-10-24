@@ -49,6 +49,7 @@ public class WebConfig {
                                 "GET", "POST", "PUT",
                                 "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
+                        .exposedHeaders("Content-Disposition")
                         .allowCredentials(true);
             }
         };

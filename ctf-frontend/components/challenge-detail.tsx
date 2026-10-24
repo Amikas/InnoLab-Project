@@ -381,7 +381,7 @@ export default function ChallengeDetail({ challenge, solveStats = null, setSolve
             // The endpoint is /api/challenges/{id}/download, not the full URL
             await apiClient.downloadFile(
                 `/api/challenges/${challenge.id}/download`,
-                challenge.originalFilename || `${challenge.id}.zip`
+                `${challenge.id}.zip`
             );
 
             // Success message

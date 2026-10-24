@@ -62,8 +62,8 @@ Challenge definitions — static flags or instance-based.
 | `category` | `VARCHAR(255)` | | e.g. web-exploitation, crypto |
 | `difficulty` | `VARCHAR(255)` | | easy, medium, hard |
 | `points` | `INTEGER` | | |
-| `download_zip` | `BYTEA` | | Challenge file binary |
-| `original_filename` | `VARCHAR(255)` | | |
+| `download_file` | `OID` | | PostgreSQL large object (Hibernate `@Lob` byte[]) |
+| `download_extension` | `VARCHAR(16)` | | Server-derived extension, e.g. zip, pdf, txt |
 | `requires_instance` | `BOOLEAN` | DEFAULT false | Dynamic container-based challenge |
 | `flag` | `VARCHAR(255)` | | Static flag (for non-instance challenges) |
 | `docker_files_json` | `TEXT` | | JSON blob of Dockerfile metadata |

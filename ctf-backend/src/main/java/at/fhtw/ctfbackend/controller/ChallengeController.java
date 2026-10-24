@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -38,8 +39,8 @@ public class ChallengeController {
     @GetMapping("/{id}/download")
     public ResponseEntity<?> download(@PathVariable String id) {
         try {
-            // Get the challenge entity to access both file and filename
-            byte[] data = challengeService.getFile(id);
+            ChallengeService.DownloadFile download = challengeService.getDownload(id);
+            byte[] data = download.content();
 
             // Check if file data exists or is empty
             if (data == null || data.length == 0) {
@@ -52,35 +53,26 @@ public class ChallengeController {
                         ));
             }
 
-            String filename = challengeService.getOriginalFilename(id);
-
-            // Debug logging
-            logger.debug("Challenge ID = {}", id);
-            logger.debug("Retrieved filename = '{}'", filename);
-            logger.debug("Is null? {}", (filename == null));
-            logger.debug("Is empty? {}", (filename != null && filename.trim().isEmpty()));
-
-            ByteArrayResource resource = new ByteArrayResource(data);
-
-            // Better fallback logic
-            if (filename == null || filename.trim().isEmpty()) {
-                logger.debug("Falling back to file extension detection");
-                String fileExtension = determineFileExtension(data);
-                filename = id + fileExtension;
+            String filename = download.filename();
+            if (filename == null || filename.isBlank()) {
+                filename = id + ".bin";
             }
 
-            logger.debug("Final filename = '{}'", filename);
+            String contentDisposition = ContentDisposition.attachment()
+                    .filename(filename, StandardCharsets.US_ASCII)
+                    .build()
+                    .toString();
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                    .body(resource);
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .body(new ByteArrayResource(data));
 
         } catch (RuntimeException e) {
             // Return proper error response
             logger.error("Download failed for challenge: {} - {}", id, e.getMessage());
 
-            if (e.getMessage().contains("Challenge not found")) {
+            if (e.getMessage() != null && e.getMessage().contains("Challenge not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(Map.of(
@@ -96,30 +88,6 @@ public class ChallengeController {
                         ));
             }
         }
-    }
-
-    // Helper method to determine file extension from content
-    private String determineFileExtension(byte[] data) {
-        if (data == null || data.length < 4) return "";
-
-        // Check for ZIP file signature
-        if (data.length >= 4 && data[0] == 0x50 && data[1] == 0x4B && data[2] == 0x03 && data[3] == 0x04) {
-            return ".zip";
-        }
-        // Check for PDF
-        if (data.length >= 4 && data[0] == 0x25 && data[1] == 0x50 && data[2] == 0x44 && data[3] == 0x46) {
-            return ".pdf";
-        }
-        // Check for JPG
-        if (data.length >= 3 && data[0] == (byte)0xFF && data[1] == (byte)0xD8 && data[2] == (byte)0xFF) {
-            return ".jpg";
-        }
-        // Check for PNG
-        if (data.length >= 8 && data[0] == (byte)0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) {
-            return ".png";
-        }
-
-        return ""; // Unknown type
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

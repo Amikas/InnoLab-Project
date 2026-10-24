@@ -24,7 +24,6 @@ export interface Challenge {
     // We'll make both optional and handle the mapping
     fileurl?: string
     downloadUrl?: string  // From backend
-    originalFilename?: string
     flag?: string
     hints?: string[]
     hintsDe?: string[]

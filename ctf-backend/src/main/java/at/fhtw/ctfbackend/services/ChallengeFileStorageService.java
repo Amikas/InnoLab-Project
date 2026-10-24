@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class ChallengeFileStorageService {
@@ -64,6 +65,33 @@ public class ChallengeFileStorageService {
         }
 
         return savedFiles;
+    }
+
+    /**
+     * Store the challenge download under the canonical name files/&lt;id&gt;.&lt;extension&gt;.
+     * Any previous canonical copy is replaced; unrelated files are left alone.
+     */
+    public void saveDownloadFile(String challengeId, String extension, byte[] data) throws IOException {
+        if (data == null || data.length == 0 || extension == null) {
+            return;
+        }
+        Path filesDir = Paths.get(getChallengeBasePath(challengeId), "files");
+        Files.createDirectories(filesDir);
+
+        Pattern canonical = Pattern.compile(Pattern.quote(challengeId) + "\\.[A-Za-z0-9]{1,16}");
+        List<Path> stale;
+        try (var stream = Files.list(filesDir)) {
+            stale = stream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> canonical.matcher(path.getFileName().toString()).matches())
+                    .toList();
+        }
+        for (Path path : stale) {
+            Files.deleteIfExists(path);
+        }
+
+        Files.write(filesDir.resolve(challengeId + "." + extension), data,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     /**

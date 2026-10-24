@@ -249,7 +249,7 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
               name="file"
               render={({ field: { value, onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Challenge Files (ZIP) - Optional Update</FormLabel>
+                  <FormLabel>Challenge File - Optional Update</FormLabel>
                   <FormControl>
                     <Input
                       type="file"
@@ -259,7 +259,7 @@ export default function EditChallengeModal({ challenge, isOpen, onClose, onSave 
                     />
                   </FormControl>
                   <FormDescription>
-                    Upload a new ZIP file to replace the existing one (optional)
+                    Upload a new file to replace the existing one (optional)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
